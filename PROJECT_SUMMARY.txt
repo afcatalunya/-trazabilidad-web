@@ -1,0 +1,232 @@
+================================================================================
+EXTRUCOLOR - SISTEMA DE TRAZABILIDAD PEDIDOS
+Next.js 14 + TypeScript + Turso + Drizzle ORM + NextAuth v5
+================================================================================
+
+ARCHIVOS CREADOS: 49 archivos de código completo
+
+ESTRUCTURA PRINCIPAL:
+├── app/                               [Aplicación Next.js App Router]
+│   ├── (auth)/login/                 [Página de login]
+│   ├── (dashboard)/                  [Dashboard protegido]
+│   │   ├── pedidos/                  [CRUD de pedidos]
+│   │   ├── clientes/                 [CRUD de clientes]
+│   │   ├── incidencias/              [Gestión de incidencias]
+│   │   ├── informes/                 [Reportes y estadísticas]
+│   │   └── admin/                    [Panel administrativo]
+│   ├── api/                          [API REST endpoints]
+│   ├── globals.css                   [Estilos globales + Tailwind]
+│   └── layout.tsx                    [Layout raíz]
+│
+├── components/                       [Componentes React reutilizables]
+│   ├── layout/                       [Sidebar, Header]
+│   ├── pedidos/                      [EstadoBadge, PedidoRow, PedidoForm, FiltrosPedidos]
+│   └── ui/                           [Button, Input, Select, Badge]
+│
+├── lib/                              [Lógica compartida]
+│   ├── auth.ts                       [NextAuth v5 configuration]
+│   ├── db.ts                         [Conexión Turso + Drizzle]
+│   ├── schema.ts                     [6 tablas Drizzle ORM]
+│   └── utils.ts                      [Funciones auxiliares + cálculo de estado]
+│
+├── scripts/                          [Scripts de configuración]
+│   ├── seed.ts                       [Crear usuario admin]
+│   └── import-excel.ts               [Importar datos de Excel]
+│
+├── middleware.ts                     [Protección de rutas]
+├── package.json                      [Dependencias]
+├── tsconfig.json                     [Configuración TypeScript]
+├── tailwind.config.ts                [Configuración Tailwind]
+├── next.config.ts                    [Configuración Next.js]
+├── drizzle.config.ts                 [Configuración Drizzle]
+├── postcss.config.js                 [Procesamiento CSS]
+├── .env.example                      [Template de variables]
+├── .gitignore                        [Ignorar archivos]
+├── README.md                         [Documentación completa]
+├── SETUP.md                          [Guía rápida]
+└── PROJECT_SUMMARY.txt               [Este archivo]
+
+================================================================================
+BASE DE DATOS (6 TABLAS)
+================================================================================
+
+1. usuarios
+   - id (PK), nombre, email (UNIQUE), password (hash), rol (ADMIN/USER)
+   - fechaCreacion, fechaActualizacion
+
+2. clientes
+   - id (PK), nombre, contacto, email, telefono, direccion, ciudad, codigoPostal, pais
+   - activo, fechaCreacion, fechaActualizacion
+
+3. pedidos [TABLA PRINCIPAL]
+   - id (PK), numeroPedido (UNIQUE), clienteId (FK)
+   - categoria (enum: 6 valores)
+   - acabado (enum: 3 valores)
+   - color, cantidad, unidad
+   - origenMaterial, almacen, urgente, estadoPedido
+   - 6 campos de fecha para tracking del progreso
+   - notas, usuarioId, fechaCreacion, fechaActualizacion
+
+4. comentarios
+   - id (PK), pedidoId (FK), usuarioId (FK)
+   - contenido, fechaCreacion
+
+5. incidencias
+   - id (PK), pedidoId (FK), usuarioId (FK)
+   - titulo, descripcion
+   - estado (ABIERTA/EN PROGRESO/RESUELTA/CERRADA)
+   - prioridad (BAJA/MEDIA/ALTA)
+   - fechaCreacion, fechaActualizacion, fechaCierre
+
+6. historial
+   - id (PK), pedidoId (FK), usuarioId (FK)
+   - accion, cambios (JSON), fechaCreacion
+
+================================================================================
+API ENDPOINTS
+================================================================================
+
+PEDIDOS:
+  GET    /api/pedidos                [Listar con filtros y búsqueda]
+  POST   /api/pedidos                [Crear pedido (calcula estado automáticamente)]
+  GET    /api/pedidos/[id]           [Obtener con comentarios e incidencias]
+  PUT    /api/pedidos/[id]           [Actualizar (recalcula estado)]
+  DELETE /api/pedidos/[id]           [Eliminar (solo ADMIN)]
+
+CLIENTES:
+  GET    /api/clientes               [Listar con búsqueda opcional]
+  POST   /api/clientes               [Crear cliente]
+  GET    /api/clientes/[id]          [Obtener cliente]
+  PUT    /api/clientes/[id]          [Actualizar cliente]
+
+INCIDENCIAS:
+  GET    /api/incidencias            [Listar con filtro de estado opcional]
+  POST   /api/incidencias            [Crear incidencia]
+  GET    /api/incidencias/[id]       [Obtener incidencia]
+  PUT    /api/incidencias/[id]       [Actualizar incidencia]
+
+COMENTARIOS:
+  GET    /api/comentarios            [Listar (opcional filtrar por pedidoId)]
+  POST   /api/comentarios            [Crear comentario]
+
+INFORMES:
+  GET    /api/informes               [Estadísticas agregadas]
+
+AUTH:
+  GET/POST /api/auth/[...nextauth]   [NextAuth handler]
+
+================================================================================
+CÁLCULO DE ESTADO
+================================================================================
+
+El estado se calcula automáticamente basado en fechas completadas:
+
+if estadoPedido === 'ANULADO' → ANULADO
+if fechaEntregaCliente → ENTREGADO
+if fechaEnTarragona → EN ALMACÉN
+if fechaCargaCamion → EN CAMION
+if fechaTerminado → PARA CARGAR MURCIA
+if fechaPlanning → PLANNING
+if fechaSalida → EN PROCESO
+else → SIN PEDIDO DE COMPRA
+
+COLORES POR ESTADO:
+- SIN PEDIDO DE COMPRA → Rojo (#fecaca bg, #991b1b text)
+- EN PROCESO → Naranja (#fed7aa bg, #9a3412 text)
+- PLANNING → Amarillo (#fef08a bg, #713f12 text)
+- PARA CARGAR MURCIA → Amarillo (#fef08a bg, #713f12 text)
+- EN CAMION → Azul (#bfdbfe bg, #1e40af text)
+- EN ALMACÉN → Verde claro (#bbf7d0 bg, #14532d text)
+- ENTREGADO → Verde oscuro (#16a34a bg, white text)
+- ANULADO → Gris (#e5e7eb bg, #6b7280 text)
+
+================================================================================
+CARACTERÍSTICAS
+================================================================================
+
+✓ Autenticación segura con NextAuth v5 (JWT + bcryptjs)
+✓ CRUD completo para pedidos, clientes, incidencias, comentarios
+✓ Sistema de filtros y búsqueda en listados
+✓ Cálculo automático de estado basado en fechas
+✓ Registro de historial de cambios
+✓ Sistema de comentarios por pedido
+✓ Gestión de incidencias con prioridades
+✓ Reportes y estadísticas (CSV exportable)
+✓ Panel administrativo
+✓ Sidebar responsive con navegación
+✓ Interfaz completamente en ESPAÑOL
+✓ Componentes UI personalizados (sin librerías externas)
+✓ Validación en servidor
+✓ Protección de rutas
+✓ Scripts de seed e importación Excel
+
+================================================================================
+USUARIO ADMINISTRADOR POR DEFECTO
+================================================================================
+
+Email: dani@extrucolor.es
+Contraseña: Extrucolor2024!
+Rol: ADMIN
+
+Crear con: npm run db:seed
+
+================================================================================
+PASOS DE INSTALACIÓN
+================================================================================
+
+1. npm install
+2. Crear .env.local con credenciales Turso
+3. npm run db:push (crear tablas)
+4. npm run db:seed (crear usuario admin)
+5. npm run db:import (opcional, importar Excel)
+6. npm run dev (iniciar servidor)
+
+Ver SETUP.md para instrucciones detalladas.
+
+================================================================================
+TECNOLOGÍAS
+================================================================================
+
+Frontend:
+  - Next.js 14.2.3 (App Router)
+  - React 18
+  - TypeScript 5
+  - Tailwind CSS 3
+  - SWR/Fetch API
+
+Backend:
+  - Next.js API Routes
+  - NextAuth v5 (Credentials provider)
+  - Drizzle ORM 0.30
+  - bcryptjs 2.4.3
+
+Base de Datos:
+  - Turso (SQLite serverless)
+  - libsql client
+
+Herramientas:
+  - Drizzle Kit (migrations)
+  - XLSX (importación Excel)
+  - TypeScript
+
+================================================================================
+NOTAS IMPORTANTES
+================================================================================
+
+- Toda la interfaz está en ESPAÑOL
+- Se mantiene historial de cambios automáticamente
+- Las contraseñas se hashean con bcryptjs (10 rounds)
+- Cada usuario mantiene una sesión JWT
+- El estado del pedido se recalcula automáticamente al actualizar fechas
+- Los filtros usan URLSearchParams para mantener estado en URL
+- Los componentes UI son personalizados, sin dependencias externas
+- El middleware protege todas las rutas del dashboard
+- Solo ADMIN puede eliminar pedidos
+
+================================================================================
+DIRECTORIO RAÍZ DEL PROYECTO
+================================================================================
+
+/sessions/sweet-zealous-dijkstra/mnt/TRAZABILIDAD PEDIDOS/trazabilidad-web/
+
+================================================================================

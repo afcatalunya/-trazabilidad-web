@@ -1,0 +1,146 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { db } from '@/lib/db'
+import { pedidos, comentarios, incidencias, historial } from '@/lib/schema'
+import { eq } from 'drizzle-orm'
+import { auth } from '@/lib/auth'
+import { calcularEstado } from '@/lib/utils'
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth()
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id } = await params
+    const pedidoId = parseInt(id)
+
+    const result = await db
+      .select()
+      .from(pedidos)
+      .where(eq(pedidos.id, pedidoId))
+      .limit(1)
+
+    const pedido = result[0] || null
+
+    if (!pedido) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+
+    const comentariosResult = await db
+      .select()
+      .from(comentarios)
+      .where(eq(comentarios.numeroPedido, pedido.numeroPedido))
+
+    const incidenciasResult = await db
+      .select()
+      .from(incidencias)
+      .where(eq(incidencias.numeroPedido, pedido.numeroPedido))
+
+    return NextResponse.json({
+      pedido,
+      comentarios: comentariosResult,
+      incidencias: incidenciasResult,
+    })
+  } catch (error) {
+    console.error('Error fetching pedido:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth()
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id } = await params
+    const pedidoId = parseInt(id)
+    const body = await req.json()
+
+    const oldResult = await db
+      .select()
+      .from(pedidos)
+      .where(eq(pedidos.id, pedidoId))
+      .limit(1)
+
+    const oldPedido = oldResult[0] || null
+
+    if (!oldPedido) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+
+    const estado = calcularEstado({ ...oldPedido, ...body })
+
+    const result = await db
+      .update(pedidos)
+      .set({
+        ...body,
+        estadoPedido: estado,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(pedidos.id, pedidoId))
+      .returning()
+
+    const updatedPedido = result[0]
+
+    if (updatedPedido) {
+      await db.insert(historial).values({
+        numeroPedido:  updatedPedido.numeroPedido,
+        tipoSalida:    updatedPedido.tipoSalida,
+        accion:        'ACTUALIZACION',
+        detalle:       'Pedido actualizado',
+        estadoAnterior: oldPedido.estadoPedido,
+        estadoNuevo:   estado,
+        usuario:       (session.user as any)?.name || (session.user as any)?.email || '',
+      })
+    }
+
+    return NextResponse.json(updatedPedido)
+  } catch (error) {
+    console.error('Error updating pedido:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth()
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    if ((session.user as any)?.rol !== 'ADMIN') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const { id } = await params
+    const pedidoId = parseInt(id)
+
+    await db.delete(pedidos).where(eq(pedidos.id, pedidoId))
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Error deleting pedido:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
