@@ -113,10 +113,17 @@ export default async function PedidoDetailPage({ params }: PageProps) {
                     { label: '5. En Tarragona',        fecha: pedido.fechaEnTarragona },
                     { label: '6. Entrega a Cliente',   fecha: pedido.fechaEntregaCliente },
                   ].map(({ label, fecha }) => (
-                    <div key={label} className={`flex items-center gap-3 p-3 rounded-lg ${fecha ? 'bg-green-50' : 'bg-gray-50'}`}>
-                      <span className={`w-3 h-3 rounded-full flex-shrink-0 ${fecha ? 'bg-green-500' : 'bg-gray-300'}`} />
+                    <div
+                      key={label}
+                      className="flex items-center gap-3 p-3 rounded-lg"
+                      style={{ background: fecha ? '#f0faf4' : '#f9fafb' }}
+                    >
+                      <span
+                        className="w-3 h-3 rounded-full flex-shrink-0"
+                        style={{ background: fecha ? '#2d9e4e' : '#d1d5db' }}
+                      />
                       <span className="text-sm font-medium text-gray-700 flex-1">{label}</span>
-                      <span className={`text-sm ${fecha ? 'text-green-700 font-semibold' : 'text-gray-400'}`}>
+                      <span className="text-sm" style={{ color: fecha ? '#1a5c35' : '#9ca3af', fontWeight: fecha ? 600 : 400 }}>
                         {fecha ? formatDate(fecha) : 'Pendiente'}
                       </span>
                     </div>
@@ -157,7 +164,7 @@ export default async function PedidoDetailPage({ params }: PageProps) {
                 {pedidoComentarios.length > 0 ? (
                   <div className="space-y-3">
                     {pedidoComentarios.map((com: any) => (
-                      <div key={com.id} className="border-l-4 border-blue-400 bg-blue-50 p-3">
+                      <div key={com.id} className="border-l-4 p-3 rounded-r" style={{ borderColor: '#2d9e4e', background: '#f0faf4' }}>
                         <p className="text-sm text-gray-900">{com.texto}</p>
                         <p className="text-xs text-gray-400 mt-1">
                           {com.usuario ? `${com.usuario} · ` : ''}{formatDate(com.fechaComentario)}
