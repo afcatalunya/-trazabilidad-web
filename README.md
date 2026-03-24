@@ -1,4 +1,4 @@
-# Extrucolor - Trazabilidad Pedidos
+#  Trazabilidad Pedidos
 
 Sistema web para la trazabilidad de pedidos de la empresa , desarrollado con Next.js 14, TypeScript, Turso (SQLite), Drizzle ORM y NextAuth.js v5.
 
