@@ -87,8 +87,13 @@ export default async function PedidosPage({ searchParams }: PageProps) {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  {['Número', 'Tipo', 'Cliente', 'Categoría', 'Acabado', 'Color', 'Estado', 'Almacén', 'Urgente'].map(h => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                  {[
+                    'Número','Tipo','F.Pedido','Cliente','Nº Cli','Comercial',
+                    'Categoría','Referencia','Acabado','Color','Proveedor','Doc.Salida',
+                    'F.Salida','F.Planning','F.Terminado','F.Camión','F.Tarragona','F.Entrega',
+                    'Estado','Incidencia','Almacén','Urgente'
+                  ].map(h => (
+                    <th key={h} className="px-3 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap">
                       {h}
                     </th>
                   ))}
