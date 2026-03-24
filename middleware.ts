@@ -1,25 +1,8 @@
-import { auth } from '@/lib/auth'
-import { NextResponse } from 'next/server'
+import NextAuth from 'next-auth'
+import { authConfig } from './auth.config'
 
-export default auth((req) => {
-  const isLoggedIn = !!req.auth
-  const isLoginPage = req.nextUrl.pathname.startsWith('/login')
-  const isApiAuth = req.nextUrl.pathname.startsWith('/api/auth')
-
-  // Permitir siempre login y rutas de auth
-  if (isLoginPage || isApiAuth) {
-    return NextResponse.next()
-  }
-
-  // Redirigir al login si no hay sesión
-  if (!isLoggedIn) {
-    const loginUrl = new URL('/login', req.nextUrl.origin)
-    loginUrl.searchParams.set('callbackUrl', req.nextUrl.pathname)
-    return NextResponse.redirect(loginUrl)
-  }
-
-  return NextResponse.next()
-})
+// Usamos solo authConfig (sin DB) para que funcione en Edge Runtime
+export default NextAuth(authConfig).auth
 
 export const config = {
   matcher: [
