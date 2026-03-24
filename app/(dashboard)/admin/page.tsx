@@ -5,6 +5,96 @@ import { useRouter } from 'next/navigation'
 import { Header } from '@/components/layout/Header'
 import { useEffect, useState } from 'react'
 
+// ─── Consola de diagnóstico de Email ─────────────────────────────────────────
+function EmailConsola() {
+  const [status, setStatus]   = useState<any>(null)
+  const [loading, setLoading] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [sendResult, setSendResult] = useState<string | null>(null)
+
+  const verificar = async () => {
+    setLoading(true); setStatus(null); setSendResult(null)
+    const res  = await fetch('/api/email/test')
+    const data = await res.json()
+    setStatus(data); setLoading(false)
+  }
+
+  const enviarTest = async () => {
+    setSending(true); setSendResult(null)
+    const res  = await fetch('/api/email/test', { method: 'POST' })
+    const data = await res.json()
+    setSendResult(data.ok ? '✅ ' + data.mensaje : '❌ ' + (data.error || 'Error'))
+    setSending(false)
+  }
+
+  return (
+    <div className="bg-white rounded-lg shadow p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-lg font-bold text-gray-900">🔌 Diagnóstico de Email SMTP</h2>
+          <p className="text-sm text-gray-500">Verifica la conexión y configuración del servidor de correo</p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={verificar} disabled={loading}
+            className="px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 disabled:opacity-50">
+            {loading ? '⏳ Verificando...' : '🔍 Verificar conexión'}
+          </button>
+          <button onClick={enviarTest} disabled={sending || !status || status.smtpStatus !== 'ok'}
+            className="px-4 py-2 text-sm font-medium rounded-lg bg-green-600 hover:bg-green-700 text-white disabled:opacity-40">
+            {sending ? 'Enviando...' : '📨 Enviar email test'}
+          </button>
+        </div>
+      </div>
+
+      {status && (
+        <div className="space-y-3">
+          {/* Estado conexión */}
+          <div className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium text-sm ${
+            status.smtpStatus === 'ok'
+              ? 'bg-green-50 text-green-800 border border-green-200'
+              : 'bg-red-50 text-red-800 border border-red-200'
+          }`}>
+            <span className="text-lg">{status.smtpStatus === 'ok' ? '✅' : '❌'}</span>
+            <div>
+              <p className="font-semibold">{status.smtpStatus === 'ok' ? 'Conexión SMTP establecida' : 'Error de conexión SMTP'}</p>
+              {status.smtpError && <p className="text-xs mt-0.5 opacity-80">{status.smtpError}</p>}
+            </div>
+          </div>
+
+          {/* Config vars */}
+          <div className="bg-gray-900 rounded-lg p-4 font-mono text-xs text-gray-300 space-y-1">
+            <p className="text-gray-500 mb-2">// Variables de entorno (producción)</p>
+            {Object.entries(status.config).map(([k, v]) => (
+              <p key={k}>
+                <span className="text-blue-400">{k.toUpperCase()}</span>
+                <span className="text-gray-500"> = </span>
+                <span className={String(v).includes('no configurado') ? 'text-red-400' : 'text-green-400'}>
+                  "{String(v)}"
+                </span>
+              </p>
+            ))}
+          </div>
+
+          {status.smtpStatus === 'error' && status.smtpError?.includes('ETIMEDOUT') && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-800">
+              <p className="font-semibold">⚠️ Puerto bloqueado por Vercel</p>
+              <p className="mt-1">Vercel (AWS) bloquea el puerto 25. Cambia <code className="bg-amber-100 px-1 rounded">EMAIL_SMTP_PORT</code> a <strong>587</strong> en las variables de entorno de Vercel y redespliega.</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {sendResult && (
+        <div className={`mt-3 px-4 py-3 rounded-lg text-sm font-medium ${
+          sendResult.startsWith('✅') ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+        }`}>
+          {sendResult}
+        </div>
+      )}
+    </div>
+  )
+}
+
 interface Usuario {
   id: number
   nombre: string
@@ -314,6 +404,9 @@ export default function AdminPage() {
               </div>
             </div>
           )}
+
+          {/* ── CONSOLA EMAIL ──────────────────────────────────────── */}
+          <EmailConsola />
 
           {/* ── INFORMES POR EMAIL ────────────────────────────────── */}
           <div className="bg-white rounded-lg shadow p-6">

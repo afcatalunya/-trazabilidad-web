@@ -1,6 +1,7 @@
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
 import { EstadoBadge } from '@/components/pedidos/EstadoBadge'
+import { DeletePedidoButton } from '@/components/pedidos/DeletePedidoButton'
 import { formatDate } from '@/lib/utils'
 import Link from 'next/link'
 import { db } from '@/lib/db'
@@ -225,6 +226,7 @@ export default async function PedidoDetailPage({ params }: PageProps) {
                   <Link href="/pedidos" className="block">
                     <Button className="w-full" variant="secondary" size="sm">← Volver</Button>
                   </Link>
+                  <DeletePedidoButton pedidoId={pedido.id} numeroPedido={pedido.numeroPedido} />
                 </div>
               </div>
             </div>
