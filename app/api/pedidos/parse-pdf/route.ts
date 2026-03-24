@@ -33,9 +33,9 @@ export async function POST(request: Request) {
     // Estrategia 1: mismo línea — "Número Cliente 0774"
     // Estrategia 2: línea siguiente — "Número Cliente\n0774"
     // Estrategia 3: único código 0XXX en el documento
-    const matchNumCliSL = text.match(/N[uú]mero\s+Cliente\s+(\d{3,4})\b/i)
-    const matchNumCliNL = text.match(/N[uú]mero\s+Cliente[^\n]*\n\s*(\d{3,4})\b/i)
-    const matchNumCliAny = text.match(/\b(0\d{3})\b/)
+    const matchNumCliSL = text.match(/N[uú]mero\s+Cliente\s+(\d{3,4})(?!\d)/i)
+    const matchNumCliNL = text.match(/N[uú]mero\s+Cliente[^\n]*\n\s*(\d{3,4})(?!\d)/i)
+    const matchNumCliAny = text.match(/(0\d{3})(?!\d)/)
     const matchNumCli = matchNumCliSL || matchNumCliNL || matchNumCliAny
     if (matchNumCli) resultado.numeroCliente = matchNumCli[1].trim()
 
