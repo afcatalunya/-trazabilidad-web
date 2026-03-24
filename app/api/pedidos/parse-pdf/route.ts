@@ -29,25 +29,30 @@ export async function POST(request: Request) {
     const matchPedido = text.match(/(?:PED\.)?([A-Z]\d{2}-\d{5})/i)
     if (matchPedido) resultado.numeroPedido = matchPedido[1].toUpperCase().trim()
 
-    // Número cliente: código de 4 dígitos empezando por 0 (ej: 0774)
-    // Buscamos mismo línea O línea siguiente al label
+    // Número cliente: código de 3-4 dígitos empezando por 0 (ej: 0774, 0095)
+    // Estrategia 1: mismo línea — "Número Cliente 0774"
+    // Estrategia 2: línea siguiente — "Número Cliente\n0774"
+    // Estrategia 3: único código 0XXX en el documento
     const matchNumCliSL = text.match(/N[uú]mero\s+Cliente\s+(\d{3,4})\b/i)
     const matchNumCliNL = text.match(/N[uú]mero\s+Cliente[^\n]*\n\s*(\d{3,4})\b/i)
-    const matchNumCli = matchNumCliSL || matchNumCliNL
+    const matchNumCliAny = text.match(/\b(0\d{3})\b/)
+    const matchNumCli = matchNumCliSL || matchNumCliNL || matchNumCliAny
     if (matchNumCli) resultado.numeroCliente = matchNumCli[1].trim()
 
-    // Nombre cliente: puede estar en la misma línea o en la siguiente
-    // Si está en la misma línea, comprobamos que NO sea un label (Fecha, Nº, etc.)
-    const matchCliSL = text.match(/Nombre\s+Cliente\s+([^\n]+)/i)
-    if (matchCliSL) {
-      const val = matchCliSL[1].trim()
-      const esLabel = /^(Fecha|N[uú]mero|N[oº]|Tel[eé]|Dir|Ord|P[aá]g|ALUMIN)/i.test(val)
-      if (!esLabel && val.length > 2) {
-        resultado.cliente = val
-      } else {
-        // Valor está en la línea siguiente al label
-        const matchCliNL = text.match(/Nombre\s+Cliente[^\n]*\n\s*([A-ZÁÉÍÓÚÜÑ][^\n]+)/i)
-        if (matchCliNL) resultado.cliente = matchCliNL[1].trim()
+    // Nombre cliente: el PDF tiene 2 columnas y pdf-parse puede mezclar labels.
+    // Estrategia robusta: buscar línea en MAYÚSCULAS con múltiples palabras
+    // que no sea la empresa ni un label de campo.
+    const LABELS_PDF = /^(N[uú]mero|Nombre|Tel[eé]f|Fecha|Dir|Su|Ord|P[aá]g|ALUMIN|CHC|SIN|EMAIL|Nº)/i
+    const lines = text.split(/[\r\n]+/)
+    for (const line of lines) {
+      const l = line.trim()
+      // Línea de nombre: >5 chars, contiene espacio (mínimo 2 palabras), no es un label conocido
+      if (l.length > 5 && l.includes(' ') && !LABELS_PDF.test(l)) {
+        // Solo letras mayúsculas españolas, espacios y algún guión/apóstrofe
+        if (/^[A-ZÁÉÍÓÚÜÑ][A-ZÁÉÍÓÚÜÑ\s\-'\.DE]+$/.test(l)) {
+          resultado.cliente = l
+          break
+        }
       }
     }
 

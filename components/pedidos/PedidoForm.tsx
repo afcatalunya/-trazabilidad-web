@@ -115,7 +115,7 @@ export function PedidoForm({ pedido, clientes = [], onSubmit, loading = false }:
       const res = await fetch('/api/pedidos/parse-pdf', { method: 'POST', body: fd })
       const data = await res.json()
       if (!res.ok || !data.ok) throw new Error(data.error || 'Error desconocido')
-      setFormData(prev => ({ ...prev, ...data.campos }))
+      setFormData({ ...defaultFormData, ...data.campos })
       const n = Object.keys(data.campos).length
       setPdfMsg({ type: 'ok', text: `✅ PDF leído — Nº pedido, fecha, Nº cliente y nombre cargados automáticamente. Completa manualmente: tipo salida, comercial, categoría, referencia, acabado, color y proveedor.` })
     } catch (err: any) {
