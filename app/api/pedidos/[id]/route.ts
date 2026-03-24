@@ -104,6 +104,25 @@ export async function PUT(
         estadoNuevo:   estado,
         usuario:       (session.user as any)?.name || (session.user as any)?.email || '',
       })
+
+      // Auto-registrar incidencia cuando IncidenciaMaterial pasa a SÍ
+      const incidenciaAnterior = (oldPedido.incidenciaMaterial || '').toUpperCase()
+      const incidenciaNueva    = (body.incidenciaMaterial || '').toUpperCase()
+      const activaIncidencia   = incidenciaNueva === 'SÍ' || incidenciaNueva === 'SI'
+      const yaTeníaIncidencia  = incidenciaAnterior === 'SÍ' || incidenciaAnterior === 'SI'
+
+      if (activaIncidencia && !yaTeníaIncidencia) {
+        // Usar el tipo enviado desde el formulario (tipoIncidenciaAuto), si no, tipo genérico
+        const tipoIncidencia = (body.tipoIncidenciaAuto || 'INCIDENCIA MATERIAL').trim().toUpperCase()
+        await db.insert(incidencias).values({
+          numeroPedido:     updatedPedido.numeroPedido,
+          tipoSalida:       updatedPedido.tipoSalida,
+          tipoIncidencia,
+          descripcion:      'Incidencia registrada automáticamente al marcar IncidenciaMaterial = SÍ',
+          estadoIncidencia: 'ABIERTA',
+          fechaIncidencia:  new Date().toISOString().split('T')[0],
+        })
+      }
     }
 
     return NextResponse.json(updatedPedido)

@@ -69,7 +69,17 @@ const INCIDENCIAS_MATERIAL = [
   { value: 'SÍ', label: 'Sí' },
 ]
 
-const defaultFormData: Partial<Pedido> = {
+const TIPOS_INCIDENCIA = [
+  { value: 'MATERIAL DEFECTUOSO',  label: 'Material defectuoso' },
+  { value: 'FALTA MATERIAL',       label: 'Falta material' },
+  { value: 'DAÑO TRANSPORTE',      label: 'Daño en transporte' },
+  { value: 'ERROR PEDIDO',         label: 'Error en el pedido' },
+  { value: 'NO VIENE EN EL CAMION', label: 'No viene en el camión' },
+  { value: 'MAL LACADO',           label: 'Mal lacado' },
+  { value: 'OTRO',                 label: 'Otro' },
+]
+
+const defaultFormData: Partial<Pedido> & { tipoIncidenciaAuto?: string } = {
   numeroPedido:       '',
   tipoSalida:         '',
   fechaPedido:        '',
@@ -85,14 +95,15 @@ const defaultFormData: Partial<Pedido> = {
   origenMaterial:     '',
   almacen:            '',
   urgente:            '',
-  incidenciaMaterial: 'NO',
-  estadoPedido:       'SIN PEDIDO DE COMPRA',
-  comentarios:        '',
-  fechaSalida:        '',
-  fechaPlanning:      '',
-  fechaTerminado:     '',
-  fechaCargaCamion:   '',
-  fechaEnTarragona:   '',
+  incidenciaMaterial:  'NO',
+  tipoIncidenciaAuto:  'MATERIAL DEFECTUOSO',
+  estadoPedido:        'SIN PEDIDO DE COMPRA',
+  comentarios:         '',
+  fechaSalida:         '',
+  fechaPlanning:       '',
+  fechaTerminado:      '',
+  fechaCargaCamion:    '',
+  fechaEnTarragona:    '',
   fechaEntregaCliente: '',
 }
 
@@ -323,6 +334,30 @@ export function PedidoForm({ pedido, clientes = [], onSubmit, loading = false }:
             onChange={handleChange}
             options={INCIDENCIAS_MATERIAL}
           />
+
+          {/* Selector de tipo — solo visible cuando hay incidencia */}
+          {(formData.incidenciaMaterial === 'SÍ' || formData.incidenciaMaterial === 'SI') && (
+            <div>
+              <label className="block text-xs font-semibold mb-1" style={{ color: '#b45309' }}>
+                ⚠️ Tipo de incidencia
+              </label>
+              <select
+                name="tipoIncidenciaAuto"
+                value={(formData as any).tipoIncidenciaAuto || 'MATERIAL DEFECTUOSO'}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border-2 rounded-lg text-sm focus:outline-none"
+                style={{ borderColor: '#f59e0b', background: '#fffbeb' }}
+              >
+                {TIPOS_INCIDENCIA.map(t => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
+              <p className="text-xs mt-1" style={{ color: '#92400e' }}>
+                Se registrará una incidencia automáticamente si es nueva
+              </p>
+            </div>
+          )}
+
           <div className="flex items-center gap-3 mt-6">
             <input
               type="checkbox"

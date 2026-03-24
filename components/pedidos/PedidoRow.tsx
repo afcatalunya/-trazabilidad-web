@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { EstadoBadge } from './EstadoBadge'
+import { AccionesRapidas } from './AccionesRapidas'
 import { formatDate } from '@/lib/utils'
 
 interface PedidoRowProps {
@@ -127,6 +128,13 @@ export function PedidoRow({ pedido, cliente = '', stripe = false }: PedidoRowPro
           : null
         }
       </td>
+
+      {/* Acciones rápidas */}
+      <AccionesRapidas
+        pedidoId={pedido.id}
+        numeroPedido={pedido.numeroPedido}
+        tipoSalida={pedido.tipoSalida}
+      />
     </tr>
   )
 }

@@ -187,7 +187,7 @@ export default async function PedidosPage({ searchParams }: PageProps) {
                   'Número','Tipo','F.Pedido','Cliente','Nº Cli','Comercial',
                   'Categoría','Referencia','Acabado','Color','Proveedor','Doc.Salida',
                   'F.Salida','F.Planning','F.Terminado','F.Camión','F.Tarragona','F.Entrega',
-                  'Estado','Incidencia','Almacén','Urgente'
+                  'Estado','Incidencia','Almacén','Urgente','Acciones'
                 ].map(h => (
                   <th
                     key={h}
@@ -210,7 +210,7 @@ export default async function PedidosPage({ searchParams }: PageProps) {
               ))}
               {result.length === 0 && (
                 <tr>
-                  <td colSpan={22} className="text-center py-16 text-gray-400">
+                  <td colSpan={23} className="text-center py-16 text-gray-400">
                     <div className="flex flex-col items-center gap-2">
                       <svg className="w-10 h-10 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}

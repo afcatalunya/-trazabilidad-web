@@ -1,4 +1,5 @@
 import { Header } from '@/components/layout/Header'
+import { BotonesAlertas } from '@/components/informes/BotonesAlertas'
 import { db } from '@/lib/db'
 import { pedidos } from '@/lib/schema'
 
@@ -372,6 +373,9 @@ export default async function InformesPage() {
             </Card>
 
           </div>
+
+          {/* ── Alertas manuales por email ── */}
+          <BotonesAlertas />
 
           <p className="text-xs text-gray-400 text-center pb-2">
             Tiempos calculados solo sobre pedidos con ambas fechas de cada etapa registradas.

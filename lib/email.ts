@@ -174,6 +174,72 @@ export async function enviarInformeSemanal(pedidos: Array<{
   })
 }
 
+// ─── AUTOMATIZACIÓN 5: Pedidos sin FechaSalida hace más de 3 días ────────────
+export async function enviarAlertaSinSalida(pedidos: Array<{
+  numeroPedido: string
+  cliente: string
+  fechaPedido: string | null
+  diasEspera: number
+  categoria?: string | null
+  proveedor?: string | null
+  urgente?: string | null
+}>) {
+  if (!process.env.EMAIL_SMTP_HOST || pedidos.length === 0) return
+
+  const filas = pedidos.map(p => {
+    const colorDias = p.diasEspera > 7 ? '#dc2626' : p.diasEspera > 5 ? '#d97706' : '#b45309'
+    const urgenteTag = p.urgente === 'URGENTE'
+      ? ' <span style="background:#dc2626;color:white;padding:1px 5px;border-radius:3px;font-size:10px;">URGENTE</span>'
+      : ''
+    return `
+      <tr>
+        <td style="padding:8px;border-bottom:1px solid #f1f5f9;font-weight:bold;color:#1e3a5f;">${p.numeroPedido}${urgenteTag}</td>
+        <td style="padding:8px;border-bottom:1px solid #f1f5f9;">${p.cliente}</td>
+        <td style="padding:8px;border-bottom:1px solid #f1f5f9;">${p.fechaPedido || '—'}</td>
+        <td style="padding:8px;border-bottom:1px solid #f1f5f9;font-weight:bold;color:${colorDias};">${p.diasEspera} días</td>
+        <td style="padding:8px;border-bottom:1px solid #f1f5f9;">${p.categoria || '—'}</td>
+        <td style="padding:8px;border-bottom:1px solid #f1f5f9;">${p.proveedor || '—'}</td>
+      </tr>
+    `
+  }).join('')
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:800px;margin:0 auto;">
+      <div style="background:#b45309;color:white;padding:16px 24px;border-radius:8px 8px 0 0;">
+        <h2 style="margin:0;font-size:18px;">⏰ Pedidos Sin Fecha de Salida — Más de 3 días</h2>
+        <p style="margin:4px 0 0;opacity:0.9;font-size:14px;">
+          ${pedidos.length} pedido${pedidos.length > 1 ? 's' : ''} registrado${pedidos.length > 1 ? 's' : ''} sin FechaSalida de material
+        </p>
+      </div>
+      <div style="background:#fffbeb;padding:12px 16px;border-left:4px solid #eab308;margin:0;font-size:13px;">
+        📦 Estos pedidos llevan <strong>más de 3 días sin recibir fecha de salida de material</strong> del proveedor. Verificar estado del pedido de compra.
+      </div>
+      <div style="border:1px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;overflow:hidden;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="background:#f1f5f9;">
+              <th style="padding:10px 8px;text-align:left;font-size:12px;color:#64748b;">PEDIDO</th>
+              <th style="padding:10px 8px;text-align:left;font-size:12px;color:#64748b;">CLIENTE</th>
+              <th style="padding:10px 8px;text-align:left;font-size:12px;color:#64748b;">F.PEDIDO</th>
+              <th style="padding:10px 8px;text-align:left;font-size:12px;color:#64748b;">DÍAS SIN SALIDA</th>
+              <th style="padding:10px 8px;text-align:left;font-size:12px;color:#64748b;">CATEGORÍA</th>
+              <th style="padding:10px 8px;text-align:left;font-size:12px;color:#64748b;">PROVEEDOR</th>
+            </tr>
+          </thead>
+          <tbody>${filas}</tbody>
+        </table>
+      </div>
+    </div>
+  `
+
+  await getTransporter().sendMail({
+    from:    FROM,
+    to:      DESTINATARIOS,
+    subject: `⏰ ALERTA: ${pedidos.length} pedido${pedidos.length > 1 ? 's' : ''} sin FechaSalida hace más de 3 días`,
+    html,
+  })
+}
+
 // ─── AUTOMATIZACIÓN 4: Pedidos terminados sin FechaEnTarragona ───────────────
 export async function enviarAlertaTerminadosSinCamion(pedidos: Array<{
   numeroPedido: string
