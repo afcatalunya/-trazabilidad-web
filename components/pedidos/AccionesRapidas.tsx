@@ -91,8 +91,11 @@ export function AccionesRapidas({ pedidoId, numeroPedido, tipoSalida }: Acciones
 
   return (
     <>
-      {/* ── 3 botones en la fila ── */}
-      <td className="px-2 py-1.5 whitespace-nowrap">
+      {/* ── 3 botones en la fila — sticky col 2 ── */}
+      <td
+        className="px-2 py-1.5 whitespace-nowrap sticky z-10"
+        style={{ left: '120px', background: 'inherit', boxShadow: '2px 0 5px rgba(0,0,0,0.06)' }}
+      >
         <div className="flex items-center gap-1">
           {/* Editar */}
           <Link

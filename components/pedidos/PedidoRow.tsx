@@ -34,10 +34,10 @@ export function PedidoRow({ pedido, cliente = '', stripe = false }: PedidoRowPro
       onMouseEnter={e => (e.currentTarget.style.background = '#f0faf4')}
       onMouseLeave={e => (e.currentTarget.style.background = bg)}
     >
-      {/* Número — sticky, primary */}
+      {/* Número — sticky col 1 */}
       <td
-        className="px-3 py-2 whitespace-nowrap text-xs font-bold sticky left-0"
-        style={{ background: 'inherit', color: '#1a5c35' }}
+        className="px-3 py-2 whitespace-nowrap text-xs font-bold sticky left-0 z-10"
+        style={{ background: 'inherit', color: '#1a5c35', minWidth: '120px', width: '120px' }}
       >
         <Link href={`/pedidos/${pedido.id}`} className="hover:underline underline-offset-2">
           {pedido.numeroPedido}
@@ -46,6 +46,13 @@ export function PedidoRow({ pedido, cliente = '', stripe = false }: PedidoRowPro
           <span className="ml-1 text-red-500" title="Urgente">🚨</span>
         )}
       </td>
+
+      {/* Acciones rápidas — sticky col 2 */}
+      <AccionesRapidas
+        pedidoId={pedido.id}
+        numeroPedido={pedido.numeroPedido}
+        tipoSalida={pedido.tipoSalida}
+      />
 
       {/* Tipo */}
       <td className="px-3 py-2 whitespace-nowrap">
@@ -128,13 +135,6 @@ export function PedidoRow({ pedido, cliente = '', stripe = false }: PedidoRowPro
           : null
         }
       </td>
-
-      {/* Acciones rápidas */}
-      <AccionesRapidas
-        pedidoId={pedido.id}
-        numeroPedido={pedido.numeroPedido}
-        tipoSalida={pedido.tipoSalida}
-      />
     </tr>
   )
 }

@@ -184,15 +184,23 @@ export default async function PedidosPage({ searchParams }: PageProps) {
             <thead className="sticky top-0 z-10">
               <tr style={{ background: '#f0faf4', borderBottom: '2px solid #b3e4c8' }}>
                 {[
-                  'Número','Tipo','F.Pedido','Cliente','Nº Cli','Comercial',
+                  'Número','Acciones','Tipo','F.Pedido','Cliente','Nº Cli','Comercial',
                   'Categoría','Referencia','Acabado','Color','Proveedor','Doc.Salida',
                   'F.Salida','F.Planning','F.Terminado','F.Camión','F.Tarragona','F.Entrega',
-                  'Estado','Incidencia','Almacén','Urgente','Acciones'
+                  'Estado','Incidencia','Almacén','Urgente'
                 ].map(h => (
                   <th
                     key={h}
-                    className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide whitespace-nowrap"
-                    style={{ color: '#1a5c35', background: '#f0faf4' }}
+                    className={`px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide whitespace-nowrap ${
+                      h === 'Número'   ? 'sticky left-0 z-20' :
+                      h === 'Acciones' ? 'sticky z-20' : ''
+                    }`}
+                    style={{
+                      color: '#1a5c35',
+                      background: '#f0faf4',
+                      ...(h === 'Número'   ? { minWidth: '120px', width: '120px' } : {}),
+                      ...(h === 'Acciones' ? { left: '120px', boxShadow: '2px 0 5px rgba(0,0,0,0.06)' } : {}),
+                    }}
                   >
                     {h}
                   </th>
