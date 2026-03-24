@@ -47,62 +47,9 @@ export async function POST(request: Request) {
       resultado.fechaPedido = `${anyo}-${mes}-${dia}`
     }
 
-    // Referencia producto: primer código alfanumérico de la línea de producto
-    // Líneas de producto suelen empezar con código tipo "CHC0090003", "ALU00123", etc.
-    const matchRef = text.match(/\n([A-Z]{2,}[0-9]{4,})\s+/m)
-    if (matchRef) resultado.referenciaProducto = matchRef[1].trim()
-
-    // Color: último segmento en la línea de producto (después de cantidades y medidas)
-    // Ejemplo: "CHC0090003 CHAPA ... 12 1.000 12 7016 TEXT 2C"
-    // El color suele ser los últimos tokens no-numéricos de la línea del producto
-    if (matchRef) {
-      // Buscar la línea completa del producto
-      const lineaProductoRegex = new RegExp(matchRef[1] + '\\s+(.+)', 'i')
-      const lineaMatch = text.match(lineaProductoRegex)
-      if (lineaMatch) {
-        const partes = lineaMatch[1].trim().split(/\s+/)
-        // Buscar desde el final la secuencia de color (números + texto como "7016 TEXT 2C")
-        // Saltamos cantidades numéricas puras al final y cogemos lo que sigue
-        let colorTokens: string[] = []
-        let i = partes.length - 1
-        // Los últimos tokens con letras son probablemente el color
-        while (i >= 0 && (isNaN(Number(partes[i])) || colorTokens.length > 0)) {
-          if (isNaN(Number(partes[i])) || colorTokens.length > 0) {
-            colorTokens.unshift(partes[i])
-          }
-          i--
-          // Detener cuando encontramos un número puro precediendo al color
-          if (i >= 0 && !isNaN(Number(partes[i])) && colorTokens.length >= 2) break
-        }
-        // Filtrar y limpiar
-        const colorStr = colorTokens.join(' ').trim()
-        if (colorStr && colorStr.length > 1 && colorStr.length < 30) {
-          resultado.color = colorStr
-        }
-      }
-    }
-
-    // Inferir tipo salida desde descripción del producto
-    const descLower = text.toLowerCase()
-    if (descLower.includes('chapa')) {
-      resultado.tipoSalida = 'CHAPAS'
-      resultado.categoria = 'CHAPAS'
-    } else if (descLower.includes('composite')) {
-      resultado.tipoSalida = 'PANEL'
-      resultado.categoria = 'COMPOSITE'
-    }
-
-    // Acabado: si el color contiene "TEXT" o "TEXTURA" → LACADO
-    if (resultado.color) {
-      const c = resultado.color.toUpperCase()
-      if (c.includes('TEXT') || c.includes('MATE') || c.includes('BRILLO') || c.includes('2C') || c.includes('1C')) {
-        resultado.acabado = 'LACADO'
-      } else if (c === 'BRUTO' || c === 'S/A') {
-        resultado.acabado = 'S/A'
-      } else if (c.includes('PLATA') || c.includes('NATURAL') || c.includes('ANOD')) {
-        resultado.acabado = 'ANODIZADO'
-      }
-    }
+    // Solo se extraen los 4 campos seguros del PDF.
+    // El resto (tipo salida, categoría, referencia, acabado, color, proveedor...)
+    // se introduce manualmente porque un pedido puede tener varias referencias.
 
     return Response.json({ ok: true, campos: resultado })
   } catch (err: any) {
