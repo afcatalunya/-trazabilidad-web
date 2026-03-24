@@ -83,9 +83,9 @@ export default async function PedidosPage({ searchParams }: PageProps) {
 
           <FiltrosPedidos />
 
-          <div className="bg-white rounded-lg shadow overflow-x-auto mt-4">
+          <div className="bg-white rounded-lg shadow mt-4 overflow-auto" style={{ maxHeight: 'calc(100vh - 240px)' }}>
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 sticky top-0 z-10">
                 <tr>
                   {[
                     'Número','Tipo','F.Pedido','Cliente','Nº Cli','Comercial',
