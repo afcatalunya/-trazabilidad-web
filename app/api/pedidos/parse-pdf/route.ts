@@ -1,7 +1,7 @@
 /**
  * POST /api/pedidos/parse-pdf
  * Recibe un PDF de "Orden de Trabajo" de Aluminios Franco,
- * extrae los campos y los devuelve como JSON para pre-rellenar el formulario.
+ * extrae los campos, lo sube a Vercel Blob y devuelve campos + URL.
  */
 export async function POST(request: Request) {
   try {
@@ -13,6 +13,20 @@ export async function POST(request: Request) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer())
+
+    // ─── Subir a Vercel Blob ─────────────────────────────────────────────────
+    let pdfAdjunto: string | null = null
+    try {
+      const { put } = await import('@vercel/blob')
+      const nombreArchivo = `pedidos/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`
+      const blob = await put(nombreArchivo, buffer, {
+        access: 'public',
+        contentType: 'application/pdf',
+      })
+      pdfAdjunto = blob.url
+    } catch (blobErr) {
+      console.warn('Vercel Blob no disponible, continuando sin adjunto:', blobErr)
+    }
 
     // Importación dinámica para evitar problemas de compilación (igual que nodemailer)
     const pdfParse = (await import('pdf-parse/lib/pdf-parse.js' as string)).default
@@ -73,7 +87,7 @@ export async function POST(request: Request) {
     // El resto (tipo salida, categoría, referencia, acabado, color, proveedor...)
     // se introduce manualmente porque un pedido puede tener varias referencias.
 
-    return Response.json({ ok: true, campos: resultado })
+    return Response.json({ ok: true, campos: resultado, pdfAdjunto })
   } catch (err: any) {
     console.error('Error parseando PDF:', err)
     return Response.json({ error: 'Error al procesar el PDF: ' + err.message }, { status: 500 })

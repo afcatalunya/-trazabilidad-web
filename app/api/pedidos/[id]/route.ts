@@ -111,6 +111,22 @@ export async function PUT(
       const activaIncidencia   = incidenciaNueva === 'SÍ' || incidenciaNueva === 'SI'
       const yaTeníaIncidencia  = incidenciaAnterior === 'SÍ' || incidenciaAnterior === 'SI'
 
+      // Auto-borrar PDF de Vercel Blob cuando el pedido se marca ENTREGADO
+      const estadoNuevoEntregado = estado === 'ENTREGADO'
+      const estadoAnteriorEntregado = oldPedido.estadoPedido === 'ENTREGADO'
+      if (estadoNuevoEntregado && !estadoAnteriorEntregado && updatedPedido.pdfAdjunto) {
+        try {
+          const { del } = await import('@vercel/blob')
+          await del(updatedPedido.pdfAdjunto)
+          // Limpiar la URL en BD
+          await db.update(pedidos)
+            .set({ pdfAdjunto: null })
+            .where(eq(pedidos.id, pedidoId))
+        } catch (blobErr) {
+          console.warn('No se pudo borrar el PDF de Blob:', blobErr)
+        }
+      }
+
       if (activaIncidencia && !yaTeníaIncidencia) {
         // Usar el tipo enviado desde el formulario (tipoIncidenciaAuto), si no, tipo genérico
         const tipoIncidencia = (body.tipoIncidenciaAuto || 'INCIDENCIA MATERIAL').trim().toUpperCase()

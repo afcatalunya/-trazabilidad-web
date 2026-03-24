@@ -14,20 +14,21 @@
   "dependencies": {
     "@auth/drizzle-adapter": "^1.1.0",
     "@libsql/client": "^0.17.2",
+    "@vercel/blob": "^2.3.1",
     "bcryptjs": "^2.4.3",
     "drizzle-orm": "^0.30.0",
     "next": "^16.2.1",
     "next-auth": "^5.0.0-beta.19",
     "nodemailer": "^7.0.0",
+    "pdf-parse": "^1.1.1",
     "react": "^18",
     "react-dom": "^18",
-    "pdf-parse": "^1.1.1",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
-    "@types/pdf-parse": "^1.1.4",
     "@types/node": "^20",
+    "@types/pdf-parse": "^1.1.4",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.0.1",

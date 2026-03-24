@@ -55,6 +55,7 @@ export const pedidos = table('pedidos', {
   almacen:              text('almacen'),                        // MURCIA | TARRAGONA | VALENCIA
   comentarios:          text('comentarios'),
   numComentarios:       integer('num_comentarios').default(0),
+  pdfAdjunto:           text('pdf_adjunto'),                    // URL Vercel Blob del PDF original
   createdAt:            text('created_at').default(sql`(datetime('now'))`),
   updatedAt:            text('updated_at').default(sql`(datetime('now'))`),
 })

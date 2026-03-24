@@ -113,6 +113,7 @@ export function PedidoForm({ pedido, clientes = [], onSubmit, loading = false }:
   )
   const [pdfLoading, setPdfLoading] = useState(false)
   const [pdfMsg, setPdfMsg] = useState<{ type: 'ok' | 'error'; text: string } | null>(null)
+  const [pdfAdjunto, setPdfAdjunto] = useState<string | null>(null)
 
   // ── Carga desde PDF ───────────────────────────────────────────────────────
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,8 +128,8 @@ export function PedidoForm({ pedido, clientes = [], onSubmit, loading = false }:
       const data = await res.json()
       if (!res.ok || !data.ok) throw new Error(data.error || 'Error desconocido')
       setFormData({ ...defaultFormData, ...data.campos })
-      const n = Object.keys(data.campos).length
-      setPdfMsg({ type: 'ok', text: `✅ PDF leído — Nº pedido, fecha, Nº cliente y nombre cargados automáticamente. Completa manualmente: tipo salida, comercial, categoría, referencia, acabado, color y proveedor.` })
+      if (data.pdfAdjunto) setPdfAdjunto(data.pdfAdjunto)
+      setPdfMsg({ type: 'ok', text: `✅ PDF leído${data.pdfAdjunto ? ' y guardado como adjunto' : ''} — Nº pedido, fecha, Nº cliente y nombre cargados automáticamente. Completa manualmente: tipo salida, comercial, categoría, referencia, acabado, color y proveedor.` })
     } catch (err: any) {
       setPdfMsg({ type: 'error', text: '❌ ' + (err.message || 'No se pudo leer el PDF') })
     } finally {
@@ -149,7 +150,7 @@ export function PedidoForm({ pedido, clientes = [], onSubmit, loading = false }:
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    await onSubmit(formData)
+    await onSubmit({ ...formData, ...(pdfAdjunto ? { pdfAdjunto } : {}) })
   }
 
   return (

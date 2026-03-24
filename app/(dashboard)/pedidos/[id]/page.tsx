@@ -93,6 +93,27 @@ export default async function PedidoDetailPage({ params }: PageProps) {
                   {campo('Origen Material', pedido.origenMaterial)}
                   {campo('Almacén', pedido.almacen)}
                 </div>
+                {/* PDF adjunto */}
+                {pedido.pdfAdjunto && (
+                  <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-3">
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#dc2626' }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase tracking-wide">PDF Orden de Trabajo</p>
+                      <a
+                        href={pedido.pdfAdjunto}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-semibold hover:underline"
+                        style={{ color: '#2d9e4e' }}
+                      >
+                        Ver / Descargar PDF →
+                      </a>
+                    </div>
+                  </div>
+                )}
+
                 {pedido.comentarios && (
                   <div className="mt-4 pt-4 border-t border-gray-100">
                     <p className="text-xs text-gray-500 uppercase tracking-wide">Comentarios</p>
