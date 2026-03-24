@@ -88,42 +88,86 @@ export function Sidebar() {
   const isActive = (path: string) => pathname.startsWith(path)
 
   return (
-    <aside className="w-64 bg-sidebar text-white h-screen flex flex-col" style={{ background: 'linear-gradient(180deg, #1a5c35 0%, #144528 100%)' }}>
+    <aside
+      className="w-64 text-white h-screen flex flex-col relative overflow-hidden"
+      style={{
+        background: 'linear-gradient(160deg, #1a5c35 0%, #0f3520 60%, #0a2718 100%)',
+        boxShadow: '4px 0 24px rgba(0,0,0,0.18)',
+      }}
+    >
+      {/* Textura sutil de fondo */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse at top left, rgba(255,255,255,0.06) 0%, transparent 60%)',
+        }}
+      />
+
       {/* Logo / Brand */}
-      <div className="px-5 py-5 border-b border-white/10 flex items-center gap-3">
+      <div
+        className="relative px-5 py-5 flex items-center gap-3"
+        style={{
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          background: 'rgba(255,255,255,0.04)',
+          backdropFilter: 'blur(8px)',
+        }}
+      >
         <AfLogo size={42} />
         <div>
-          <p className="text-white font-bold text-sm leading-tight">Aluminios Franco</p>
-          <p className="text-white/50 text-xs mt-0.5">Trazabilidad</p>
+          <p className="text-white font-semibold text-sm leading-tight tracking-tight">Aluminios Franco</p>
+          <p className="text-white/40 text-xs mt-0.5 font-medium tracking-wider uppercase" style={{ fontSize: '10px' }}>Trazabilidad</p>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-5 space-y-1">
+      <nav className="relative flex-1 px-3 py-4 space-y-0.5">
         {navItems.map((item) => (
           <Link
             key={item.path}
             href={item.path}
-            className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-150 text-sm font-medium ${
+            className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 text-sm font-medium group ${
               isActive(item.path)
-                ? 'bg-white/15 text-white shadow-sm'
-                : 'text-white/70 hover:bg-white/10 hover:text-white'
+                ? 'text-white'
+                : 'text-white/60 hover:text-white/90'
             }`}
+            style={
+              isActive(item.path)
+                ? {
+                    background: 'rgba(255,255,255,0.12)',
+                    backdropFilter: 'blur(8px)',
+                    borderLeft: '3px solid rgba(255,255,255,0.7)',
+                    paddingLeft: '13px',
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.08)',
+                  }
+                : {
+                    borderLeft: '3px solid transparent',
+                    paddingLeft: '13px',
+                  }
+            }
           >
-            <span className={isActive(item.path) ? 'text-white' : 'text-white/60'}>
+            <span
+              className="transition-all duration-200"
+              style={{ opacity: isActive(item.path) ? 1 : 0.55 }}
+            >
               {item.icon}
             </span>
-            {item.label}
+            <span className="transition-all duration-200">{item.label}</span>
             {isActive(item.path) && (
-              <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white/80" />
+              <span
+                className="ml-auto w-1.5 h-1.5 rounded-full"
+                style={{ background: 'rgba(255,255,255,0.75)', boxShadow: '0 0 6px rgba(255,255,255,0.5)' }}
+              />
             )}
           </Link>
         ))}
       </nav>
 
       {/* Footer */}
-      <div className="px-5 py-4 border-t border-white/10">
-        <p className="text-white/30 text-xs">© 2026 Aluminios Franco S.A.</p>
+      <div
+        className="relative px-5 py-4"
+        style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}
+      >
+        <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: '11px' }}>© 2026 Aluminios Franco S.A.</p>
       </div>
     </aside>
   )

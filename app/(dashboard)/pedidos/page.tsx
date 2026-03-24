@@ -29,23 +29,60 @@ function KpiCard({ label, value, color, active, href }: {
   active?: boolean
   href: string
 }) {
+  // Convierte hex a rgba para sombra tintada
+  const hexToRgb = (hex: string) => {
+    const r = parseInt(hex.slice(1, 3), 16)
+    const g = parseInt(hex.slice(3, 5), 16)
+    const b = parseInt(hex.slice(5, 7), 16)
+    return `${r},${g},${b}`
+  }
+  const rgb = hexToRgb(color)
+
   return (
     <Link href={href}>
       <div
-        className={`rounded-xl px-4 py-3 cursor-pointer transition-all duration-150 border ${
+        className="rounded-xl px-4 py-3 cursor-pointer transition-all duration-200"
+        style={
           active
-            ? 'shadow-md scale-[1.02]'
-            : 'hover:shadow-sm hover:scale-[1.01]'
-        }`}
-        style={{
-          background: active ? color : '#fff',
-          borderColor: active ? color : '#e5e7eb',
+            ? {
+                background: `linear-gradient(135deg, ${color} 0%, ${color}dd 100%)`,
+                boxShadow: `0 4px 20px rgba(${rgb}, 0.35), 0 1px 4px rgba(${rgb}, 0.2)`,
+                transform: 'scale(1.03) translateY(-1px)',
+                border: `1px solid ${color}`,
+              }
+            : {
+                background: '#fff',
+                border: '1px solid #e9ecef',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+              }
+        }
+        onMouseEnter={(e) => {
+          if (!active) {
+            const el = e.currentTarget as HTMLElement
+            el.style.boxShadow = `0 4px 16px rgba(${rgb}, 0.18), 0 1px 4px rgba(0,0,0,0.06)`
+            el.style.transform = 'translateY(-1px)'
+            el.style.borderColor = `rgba(${rgb}, 0.4)`
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!active) {
+            const el = e.currentTarget as HTMLElement
+            el.style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)'
+            el.style.transform = 'none'
+            el.style.borderColor = '#e9ecef'
+          }
         }}
       >
-        <p className={`text-2xl font-bold leading-none ${active ? 'text-white' : 'text-gray-800'}`}>
+        <p
+          className="text-2xl font-bold leading-none tabular-nums"
+          style={{ color: active ? '#fff' : '#111827' }}
+        >
           {value}
         </p>
-        <p className={`text-xs mt-1 font-medium ${active ? 'text-white/80' : 'text-gray-500'}`}>
+        <p
+          className="text-xs mt-1.5 font-medium tracking-wide"
+          style={{ color: active ? 'rgba(255,255,255,0.8)' : '#6b7280' }}
+        >
           {label}
         </p>
       </div>

@@ -13,7 +13,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen" style={{ background: '#f4f7f5' }}>
+    <div className="flex h-screen" style={{ background: 'linear-gradient(135deg, #f0f4f2 0%, #e8f0eb 100%)' }}>
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         {children}
