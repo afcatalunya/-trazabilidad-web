@@ -27,9 +27,12 @@ export async function GET(req: NextRequest) {
     if (search) {
       conditions.push(
         or(
-          like(pedidos.numeroPedido, `%${search}%`),
-          like(pedidos.cliente, `%${search}%`),
-          like(pedidos.numeroCliente, `%${search}%`)
+          like(pedidos.numeroPedido,       `%${search}%`),
+          like(pedidos.cliente,             `%${search}%`),
+          like(pedidos.numeroCliente,       `%${search}%`),
+          like(pedidos.proveedor,           `%${search}%`),
+          like(pedidos.referenciaProducto,  `%${search}%`),
+          like(pedidos.tipoSalida,          `%${search}%`),
         )
       )
     }

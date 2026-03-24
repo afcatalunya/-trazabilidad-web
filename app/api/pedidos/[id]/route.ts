@@ -82,6 +82,25 @@ export async function PUT(
 
     const estado = calcularEstado({ ...oldPedido, ...body })
 
+    // ── Máquina de estados: validar transiciones ilógicas ──────────────────────
+    const rolUsuario = (session.user as any)?.rol
+    if (rolUsuario !== 'ADMIN') {
+      // ANULADO es estado final — solo ADMIN puede reactivar un pedido anulado
+      if (oldPedido.estadoPedido === 'ANULADO' && estado !== 'ANULADO') {
+        return NextResponse.json(
+          { error: 'Un pedido ANULADO no puede reactivarse. Contacta con un administrador.' },
+          { status: 400 }
+        )
+      }
+      // ENTREGADO es estado final — solo ADMIN puede revertirlo (p.ej. para corregir una fecha errónea)
+      if (oldPedido.estadoPedido === 'ENTREGADO' && estado !== 'ENTREGADO') {
+        return NextResponse.json(
+          { error: 'Un pedido ENTREGADO no puede revertirse. Contacta con un administrador.' },
+          { status: 400 }
+        )
+      }
+    }
+
     const result = await db
       .update(pedidos)
       .set({

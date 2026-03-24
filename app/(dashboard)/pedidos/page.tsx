@@ -6,6 +6,7 @@ import { FiltrosPedidos } from '@/components/pedidos/FiltrosPedidos'
 import { EstadoBadge } from '@/components/pedidos/EstadoBadge'
 import { KpiCard } from '@/components/pedidos/KpiCard'
 import { BotonCargaMurcia } from '@/components/pedidos/BotonCargaMurcia'
+import { AutoRefresh } from '@/components/pedidos/AutoRefresh'
 import { db } from '@/lib/db'
 import { pedidos } from '@/lib/schema'
 import { like, and, eq, or, count, sql } from 'drizzle-orm'
@@ -44,9 +45,12 @@ export default async function PedidosPage({ searchParams }: PageProps) {
   if (search) {
     conditions.push(
       or(
-        like(pedidos.numeroPedido, `%${search}%`),
-        like(pedidos.cliente, `%${search}%`),
-        like(pedidos.numeroCliente, `%${search}%`)
+        like(pedidos.numeroPedido,       `%${search}%`),
+        like(pedidos.cliente,             `%${search}%`),
+        like(pedidos.numeroCliente,       `%${search}%`),
+        like(pedidos.proveedor,           `%${search}%`),
+        like(pedidos.referenciaProducto,  `%${search}%`),
+        like(pedidos.tipoSalida,          `%${search}%`),
       )
     )
   }
@@ -143,6 +147,8 @@ export default async function PedidosPage({ searchParams }: PageProps) {
 
   return (
     <>
+      {/* Auto-refresco silencioso cada 30 segundos */}
+      <AutoRefresh intervalMs={30_000} />
       <Header title="Pedidos" />
 
       {/* KPI Cards */}
@@ -200,6 +206,23 @@ export default async function PedidosPage({ searchParams }: PageProps) {
         </div>
         <div className="flex items-center gap-2">
           <BotonCargaMurcia />
+          {/* Exportar CSV — respeta todos los filtros activos */}
+          <a
+            href={`/api/pedidos/export?${[
+              estado    ? `estado=${encodeURIComponent(estado)}`       : '',
+              vista !== 'activos' ? `vista=${vista}` : '',
+              baseParams,
+            ].filter(Boolean).join('&')}`}
+            title="Exportar a CSV (se abre en Excel)"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors"
+            style={{ background: '#f0fdf4', color: '#15803d', borderColor: '#bbf7d0' }}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+            </svg>
+            Excel
+          </a>
           <Link href="/pedidos/nuevo">
             <Button variant="primary" size="sm">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

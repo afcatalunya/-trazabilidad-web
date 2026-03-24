@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { usuarios } from '@/lib/schema'
+import { usuarios, historial } from '@/lib/schema'
 import { auth } from '@/lib/auth'
 import { eq } from 'drizzle-orm'
 import bcrypt from 'bcryptjs'
@@ -14,6 +14,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const { nombre, rol, activo, password } = await req.json()
   const { id: idStr } = await params
   const id = parseInt(idStr)
+  const adminUser = (session.user as any)?.name || (session.user as any)?.email || 'ADMIN'
 
   const updates: any = {
     nombre,
@@ -24,6 +25,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   if (password) {
     updates.password = await bcrypt.hash(password, 10)
+    // Registrar cambio de contraseña en historial para auditoría
+    await db.insert(historial).values({
+      numeroPedido: `ADMIN:USUARIO:${id}`,   // prefijo para distinguir de pedidos
+      accion:       'CAMBIO_CONTRASEÑA',
+      detalle:      `Contraseña cambiada para "${nombre}" (ID ${id}) por ${adminUser}`,
+      usuario:      adminUser,
+    })
   }
 
   await db.update(usuarios).set(updates).where(eq(usuarios.id, id))
