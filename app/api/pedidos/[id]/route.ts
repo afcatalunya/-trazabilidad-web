@@ -168,6 +168,14 @@ export async function DELETE(
     const { id } = await params
     const pedidoId = parseInt(id)
 
+    // Obtener numeroPedido antes de borrar para limpiar datos relacionados
+    const [pedido] = await db.select().from(pedidos).where(eq(pedidos.id, pedidoId)).limit(1)
+    if (pedido?.numeroPedido) {
+      await db.delete(comentarios).where(eq(comentarios.numeroPedido, pedido.numeroPedido))
+      await db.delete(incidencias).where(eq(incidencias.numeroPedido, pedido.numeroPedido))
+      await db.delete(historial).where(eq(historial.numeroPedido, pedido.numeroPedido))
+    }
+
     await db.delete(pedidos).where(eq(pedidos.id, pedidoId))
 
     return NextResponse.json({ success: true })

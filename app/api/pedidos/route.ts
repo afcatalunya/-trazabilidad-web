@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { pedidos, historial } from '@/lib/schema'
+import { pedidos, historial, clientes } from '@/lib/schema'
 import { like, and, eq, or } from 'drizzle-orm'
 import { auth } from '@/lib/auth'
 import { calcularEstado } from '@/lib/utils'
@@ -95,6 +95,19 @@ export async function POST(req: NextRequest) {
         estadoNuevo:  estado,
         usuario:      (session.user as any)?.name || (session.user as any)?.email || '',
       })
+    }
+
+    // Auto-registrar cliente nuevo si no existe en la tabla clientes
+    if (newPedido?.cliente && newPedido?.numeroCliente) {
+      try {
+        await db.insert(clientes).values({
+          numeroCliente:   newPedido.numeroCliente,
+          nombreCliente:   newPedido.cliente,
+          codigoComercial: newPedido.codigoComercial || null,
+        }).onConflictDoNothing()
+      } catch {
+        // Si ya existe, ignorar silenciosamente
+      }
     }
 
     // Automatización 1: email al crear pedido (import dinámico para no romper compilación)
