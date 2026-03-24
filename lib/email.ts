@@ -309,3 +309,92 @@ export async function enviarAlertaTerminadosSinCamion(pedidos: Array<{
     html,
   })
 }
+
+// ─── CARGA CAMIÓN MURCIA ──────────────────────────────────────────────────────
+export async function enviarEmailCargaMurcia(pedidos: Array<{
+  numeroPedido: string
+  categoria?: string | null
+  referenciaProducto?: string | null
+  proveedor?: string | null
+  pdfAdjunto?: string | null
+}>) {
+  if (!process.env.EMAIL_SMTP_HOST) return
+
+  const fecha = new Date().toLocaleDateString('es-ES', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+  })
+
+  const filas = pedidos.map((p, i) => `
+    <tr style="background:${i % 2 === 0 ? '#ffffff' : '#f9fafb'};">
+      <td style="padding:10px 12px;border-bottom:1px solid #f0f0f0;font-weight:bold;color:#1a1a1a;white-space:nowrap;">${p.numeroPedido}</td>
+      <td style="padding:10px 12px;border-bottom:1px solid #f0f0f0;color:#374151;">${p.categoria || '—'}</td>
+      <td style="padding:10px 12px;border-bottom:1px solid #f0f0f0;color:#374151;">${p.referenciaProducto || '—'}</td>
+      <td style="padding:10px 12px;border-bottom:1px solid #f0f0f0;color:#374151;">${p.proveedor || '—'}</td>
+    </tr>
+  `).join('')
+
+  const conPdf = pedidos.filter(p => p.pdfAdjunto)
+  const sinPdf = pedidos.length - conPdf.length
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:750px;margin:0 auto;">
+      <!-- Cabecera -->
+      <div style="background:#c0392b;color:white;padding:18px 24px;border-radius:8px 8px 0 0;">
+        <h1 style="margin:0;font-size:20px;letter-spacing:1px;">🚛 PEDIDOS TERMINADOS PARA CARGAR EN MURCIA</h1>
+        <p style="margin:6px 0 0;opacity:0.9;font-size:14px;">
+          Pedidos con fecha de terminado pendientes de llegar a Tarragona · ${fecha}
+        </p>
+      </div>
+
+      <!-- Tabla -->
+      <div style="border:1px solid #e5e7eb;border-top:none;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="background:#f87171;color:white;">
+              <th style="padding:10px 12px;text-align:left;font-size:12px;font-weight:700;letter-spacing:0.5px;">NUMERO PEDIDO</th>
+              <th style="padding:10px 12px;text-align:left;font-size:12px;font-weight:700;letter-spacing:0.5px;">CATEGORÍA</th>
+              <th style="padding:10px 12px;text-align:left;font-size:12px;font-weight:700;letter-spacing:0.5px;">REFERENCIA PRODUCTO</th>
+              <th style="padding:10px 12px;text-align:left;font-size:12px;font-weight:700;letter-spacing:0.5px;">PROVEEDOR</th>
+            </tr>
+          </thead>
+          <tbody>${filas}</tbody>
+        </table>
+      </div>
+
+      <!-- Footer -->
+      <div style="background:#f9fafb;padding:14px 20px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;font-size:13px;color:#6b7280;">
+        <strong>${pedidos.length} pedido${pedidos.length !== 1 ? 's' : ''}</strong> terminado${pedidos.length !== 1 ? 's' : ''} pendiente${pedidos.length !== 1 ? 's' : ''} de carga.
+        ${conPdf.length > 0 ? ` · <strong>${conPdf.length} PDF${conPdf.length !== 1 ? 's' : ''} adjunto${conPdf.length !== 1 ? 's' : ''}</strong>.` : ''}
+        ${sinPdf > 0 ? ` · ${sinPdf} sin PDF.` : ''}
+      </div>
+    </div>
+  `
+
+  // Adjuntar PDFs de los pedidos que lo tienen
+  const attachments: nodemailer.Attachment[] = []
+  for (const p of conPdf) {
+    if (!p.pdfAdjunto) continue
+    try {
+      const resp = await fetch(p.pdfAdjunto)
+      if (resp.ok) {
+        const buffer = Buffer.from(await resp.arrayBuffer())
+        attachments.push({
+          filename: `${p.numeroPedido}.pdf`,
+          content:  buffer,
+          contentType: 'application/pdf',
+        })
+      }
+    } catch {
+      // Si falla la descarga de un PDF, continúa sin él
+      console.warn(`No se pudo adjuntar PDF de ${p.numeroPedido}`)
+    }
+  }
+
+  await getTransporter().sendMail({
+    from:        FROM,
+    to:          DESTINATARIOS,
+    subject:     `🚛 CARGA CAMION MURCIA - ${fecha}`,
+    html,
+    attachments,
+  })
+}

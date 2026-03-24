@@ -5,6 +5,7 @@ import { PedidoRow } from '@/components/pedidos/PedidoRow'
 import { FiltrosPedidos } from '@/components/pedidos/FiltrosPedidos'
 import { EstadoBadge } from '@/components/pedidos/EstadoBadge'
 import { KpiCard } from '@/components/pedidos/KpiCard'
+import { BotonCargaMurcia } from '@/components/pedidos/BotonCargaMurcia'
 import { db } from '@/lib/db'
 import { pedidos } from '@/lib/schema'
 import { like, and, eq, or, count, sql } from 'drizzle-orm'
@@ -141,14 +142,17 @@ export default async function PedidosPage({ searchParams }: PageProps) {
             <><span className="text-gray-800 font-semibold">{total}</span> de {totalAll} pedidos</>
           )}
         </p>
-        <Link href="/pedidos/nuevo">
-          <Button variant="primary" size="sm">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Nuevo Pedido
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <BotonCargaMurcia />
+          <Link href="/pedidos/nuevo">
+            <Button variant="primary" size="sm">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Nuevo Pedido
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Filters */}
