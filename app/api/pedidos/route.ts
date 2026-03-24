@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { pedidos, historial, clientes } from '@/lib/schema'
-import { like, and, eq, or } from 'drizzle-orm'
+import { like, and, eq, or, count } from 'drizzle-orm'
 import { auth } from '@/lib/auth'
 import { calcularEstado } from '@/lib/utils'
 
@@ -49,11 +49,14 @@ export async function GET(req: NextRequest) {
       .limit(limit)
       .offset(offset)
 
-    const countResult = await db.select({ id: pedidos.id }).from(pedidos).where(where)
+    const [{ total: totalCount }] = await db
+      .select({ total: count() })
+      .from(pedidos)
+      .where(where)
 
     return NextResponse.json({
       data: result,
-      total: countResult.length,
+      total: totalCount,
       page,
       limit,
     })

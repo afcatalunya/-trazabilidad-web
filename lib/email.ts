@@ -14,6 +14,16 @@
  */
 import nodemailer from 'nodemailer'
 
+// ─── URL de la app (producción o local) ──────────────────────────────────────
+function getAppUrl(): string {
+  // NEXTAUTH_URL se define en las variables de entorno de Vercel
+  if (process.env.NEXTAUTH_URL) return process.env.NEXTAUTH_URL.replace(/\/$/, '')
+  // VERCEL_URL lo inyecta Vercel automáticamente (sin protocolo)
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`
+  // Fallback explícito al dominio de producción
+  return 'https://trazabilidad-web.vercel.app'
+}
+
 // ─── Transporter ─────────────────────────────────────────────────────────────
 function getTransporter() {
   return nodemailer.createTransport({
@@ -128,10 +138,11 @@ export async function enviarInformeSemanal(pedidos: Array<{
 }>) {
   if (!process.env.EMAIL_SMTP_HOST) return
 
+  const appUrl = getAppUrl()
   const filas = pedidos.map(p => `
     <tr>
       <td style="padding:8px;border-bottom:1px solid #f1f5f9;">
-        <a href="http://localhost:3000/pedidos" style="color:#1e3a5f;font-weight:bold;">${p.numeroPedido}</a>
+        <a href="${appUrl}/pedidos?search=${encodeURIComponent(p.numeroPedido)}" style="color:#1e3a5f;font-weight:bold;text-decoration:none;">${p.numeroPedido}</a>
         ${p.urgente === 'URGENTE' ? ' <span style="background:#dc2626;color:white;padding:1px 6px;border-radius:3px;font-size:11px;">URGENTE</span>' : ''}
       </td>
       <td style="padding:8px;border-bottom:1px solid #f1f5f9;">${p.cliente}</td>
@@ -189,6 +200,7 @@ export async function enviarAlertaSinSalida(pedidos: Array<{
 }>) {
   if (!process.env.EMAIL_SMTP_HOST || pedidos.length === 0) return
 
+  const appUrlAlerta = getAppUrl()
   const filas = pedidos.map(p => {
     const colorDias = p.diasEspera > 7 ? '#dc2626' : p.diasEspera > 5 ? '#d97706' : '#b45309'
     const urgenteTag = p.urgente === 'URGENTE'
@@ -196,7 +208,9 @@ export async function enviarAlertaSinSalida(pedidos: Array<{
       : ''
     return `
       <tr>
-        <td style="padding:8px;border-bottom:1px solid #f1f5f9;font-weight:bold;color:#1e3a5f;">${p.numeroPedido}${urgenteTag}</td>
+        <td style="padding:8px;border-bottom:1px solid #f1f5f9;font-weight:bold;">
+          <a href="${appUrlAlerta}/pedidos?search=${encodeURIComponent(p.numeroPedido)}" style="color:#1e3a5f;font-weight:bold;text-decoration:none;">${p.numeroPedido}</a>${urgenteTag}
+        </td>
         <td style="padding:8px;border-bottom:1px solid #f1f5f9;">${p.cliente}</td>
         <td style="padding:8px;border-bottom:1px solid #f1f5f9;">${p.fechaPedido || '—'}</td>
         <td style="padding:8px;border-bottom:1px solid #f1f5f9;font-weight:bold;color:${colorDias};">${p.diasEspera} días</td>
@@ -254,6 +268,7 @@ export async function enviarAlertaTerminadosSinCamion(pedidos: Array<{
 }>) {
   if (!process.env.EMAIL_SMTP_HOST || pedidos.length === 0) return
 
+  const appUrlTerminados = getAppUrl()
   const filas = pedidos.map(p => {
     const diasEspera = p.fechaTerminado
       ? Math.floor((Date.now() - new Date(p.fechaTerminado).getTime()) / 86400000)
@@ -262,7 +277,9 @@ export async function enviarAlertaTerminadosSinCamion(pedidos: Array<{
 
     return `
       <tr>
-        <td style="padding:8px;border-bottom:1px solid #f1f5f9;font-weight:bold;color:#1e3a5f;">${p.numeroPedido}</td>
+        <td style="padding:8px;border-bottom:1px solid #f1f5f9;font-weight:bold;">
+          <a href="${appUrlTerminados}/pedidos?search=${encodeURIComponent(p.numeroPedido)}" style="color:#1e3a5f;font-weight:bold;text-decoration:none;">${p.numeroPedido}</a>
+        </td>
         <td style="padding:8px;border-bottom:1px solid #f1f5f9;">${p.cliente}</td>
         <td style="padding:8px;border-bottom:1px solid #f1f5f9;">${p.fechaTerminado || '—'}</td>
         <td style="padding:8px;border-bottom:1px solid #f1f5f9;font-weight:bold;color:${colorDias};">${diasEspera} días</td>
@@ -324,9 +341,12 @@ export async function enviarEmailCargaMurcia(pedidos: Array<{
     day: '2-digit', month: '2-digit', year: 'numeric',
   })
 
+  const appUrlMurcia = getAppUrl()
   const filas = pedidos.map((p, i) => `
     <tr style="background:${i % 2 === 0 ? '#ffffff' : '#f9fafb'};">
-      <td style="padding:10px 12px;border-bottom:1px solid #f0f0f0;font-weight:bold;color:#1a1a1a;white-space:nowrap;">${p.numeroPedido}</td>
+      <td style="padding:10px 12px;border-bottom:1px solid #f0f0f0;font-weight:bold;white-space:nowrap;">
+        <a href="${appUrlMurcia}/pedidos?search=${encodeURIComponent(p.numeroPedido)}" style="color:#c0392b;font-weight:bold;text-decoration:none;">${p.numeroPedido}</a>
+      </td>
       <td style="padding:10px 12px;border-bottom:1px solid #f0f0f0;color:#374151;">${p.categoria || '—'}</td>
       <td style="padding:10px 12px;border-bottom:1px solid #f0f0f0;color:#374151;">${p.referenciaProducto || '—'}</td>
       <td style="padding:10px 12px;border-bottom:1px solid #f0f0f0;color:#374151;">${p.proveedor || '—'}</td>
@@ -370,25 +390,27 @@ export async function enviarEmailCargaMurcia(pedidos: Array<{
     </div>
   `
 
-  // Adjuntar PDFs de los pedidos que lo tienen
-  const attachments: nodemailer.Attachment[] = []
-  for (const p of conPdf) {
-    if (!p.pdfAdjunto) continue
-    try {
-      const resp = await fetch(p.pdfAdjunto)
-      if (resp.ok) {
-        const buffer = Buffer.from(await resp.arrayBuffer())
-        attachments.push({
-          filename: `${p.numeroPedido}.pdf`,
-          content:  buffer,
-          contentType: 'application/pdf',
-        })
+  // Adjuntar PDFs en paralelo (Promise.all evita esperas en serie)
+  const attachmentResults = await Promise.all(
+    conPdf.map(async (p): Promise<nodemailer.Attachment | null> => {
+      if (!p.pdfAdjunto) return null
+      try {
+        const resp = await fetch(p.pdfAdjunto)
+        if (resp.ok) {
+          const buffer = Buffer.from(await resp.arrayBuffer())
+          return {
+            filename:    `${p.numeroPedido}.pdf`,
+            content:     buffer,
+            contentType: 'application/pdf',
+          }
+        }
+      } catch {
+        console.warn(`No se pudo adjuntar PDF de ${p.numeroPedido}`)
       }
-    } catch {
-      // Si falla la descarga de un PDF, continúa sin él
-      console.warn(`No se pudo adjuntar PDF de ${p.numeroPedido}`)
-    }
-  }
+      return null
+    })
+  )
+  const attachments = attachmentResults.filter((a): a is nodemailer.Attachment => a !== null)
 
   await getTransporter().sendMail({
     from:        FROM,

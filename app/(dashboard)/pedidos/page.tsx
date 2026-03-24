@@ -115,11 +115,11 @@ export default async function PedidosPage({ searchParams }: PageProps) {
   const totalPages = Math.ceil(total / limit)
   const totalAll = Object.values(stats).reduce((a, b) => a + b, 0)
 
-  // Build base URL preserving other params
+  // Build base URL preserving other params (con encodeURIComponent para valores especiales)
   const baseParams = [
-    search    ? `search=${search}` : '',
-    almacen   ? `almacen=${almacen}` : '',
-    categoria ? `categoria=${categoria}` : '',
+    search    ? `search=${encodeURIComponent(search)}` : '',
+    almacen   ? `almacen=${encodeURIComponent(almacen)}` : '',
+    categoria ? `categoria=${encodeURIComponent(categoria)}` : '',
     urgente   ? `urgente=${urgente}` : '',
   ].filter(Boolean).join('&')
 
@@ -278,12 +278,12 @@ export default async function PedidosPage({ searchParams }: PageProps) {
         <span className="text-xs text-gray-400">Página {page} de {totalPages || 1}</span>
         <div className="flex gap-2">
           {page > 1 && (
-            <Link href={`/pedidos?page=${page - 1}${search ? `&search=${search}` : ''}${estado ? `&estado=${estado}` : ''}${vista !== 'activos' ? `&vista=${vista}` : ''}`}>
+            <Link href={`/pedidos?page=${page - 1}${estado ? `&estado=${encodeURIComponent(estado)}` : ''}${vista !== 'activos' ? `&vista=${vista}` : ''}${baseParams ? `&${baseParams}` : ''}`}>
               <Button variant="secondary" size="sm">← Anterior</Button>
             </Link>
           )}
           {page < totalPages && (
-            <Link href={`/pedidos?page=${page + 1}${search ? `&search=${search}` : ''}${estado ? `&estado=${estado}` : ''}${vista !== 'activos' ? `&vista=${vista}` : ''}`}>
+            <Link href={`/pedidos?page=${page + 1}${estado ? `&estado=${encodeURIComponent(estado)}` : ''}${vista !== 'activos' ? `&vista=${vista}` : ''}${baseParams ? `&${baseParams}` : ''}`}>
               <Button variant="secondary" size="sm">Siguiente →</Button>
             </Link>
           )}
