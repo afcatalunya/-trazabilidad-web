@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
       host:   process.env.EMAIL_SMTP_HOST,
       port:   Number(process.env.EMAIL_SMTP_PORT || 587),
       secure: process.env.EMAIL_SMTP_SECURE !== 'false',
+      tls:    { rejectUnauthorized: false },
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
@@ -56,6 +57,7 @@ export async function POST(req: NextRequest) {
       host:   process.env.EMAIL_SMTP_HOST,
       port:   Number(process.env.EMAIL_SMTP_PORT || 587),
       secure: process.env.EMAIL_SMTP_SECURE !== 'false',
+      tls:    { rejectUnauthorized: false },
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,

@@ -24,6 +24,9 @@ function getTransporter() {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
+    // El servidor usa certificado de securemail.pro con alias authsmtp.aluminiosfranco.es
+    // El CN no coincide → desactivamos la validación estricta del certificado
+    tls: { rejectUnauthorized: false },
   })
 }
 
