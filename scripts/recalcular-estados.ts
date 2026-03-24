@@ -28,13 +28,13 @@ loadEnvFile('.env.local')
 
 // ── Lógica de estados (misma que lib/utils.ts) ────────────────────────────────
 function calcularEstado(p: any): string {
-  if (p.estadoPedido === 'ANULADO') return 'ANULADO'
-  if (p.fechaEntregaCliente) return 'ENTREGADO'
-  if (p.fechaEnTarragona)   return 'EN ALMACÉN'
-  if (p.fechaCargaCamion)   return 'EN CAMION'
-  if (p.fechaTerminado)     return 'PARA CARGAR MURCIA'
-  if (p.fechaPlanning)      return 'PLANNING'
-  if (p.fechaSalida)        return 'EN PROCESO'
+  if (p['estado_pedido'] === 'ANULADO') return 'ANULADO'
+  if (p['fecha_entrega_cliente']) return 'ENTREGADO'
+  if (p['fecha_en_tarragona'])    return 'EN ALMACÉN'
+  if (p['fecha_carga_camion'])    return 'EN CAMION'
+  if (p['fecha_terminado'])       return 'PARA CARGAR MURCIA'
+  if (p['fecha_planning'])        return 'PLANNING'
+  if (p['fecha_salida'])          return 'EN PROCESO'
   return 'SIN PEDIDO DE COMPRA'
 }
 
@@ -51,9 +51,9 @@ async function main() {
 
   console.log('🔍 Cargando todos los pedidos...')
   const result = await client.execute(`
-    SELECT id, numeroPedido, estadoPedido,
-           fechaSalida, fechaPlanning, fechaTerminado,
-           fechaCargaCamion, fechaEnTarragona, fechaEntregaCliente
+    SELECT id, numero_pedido, estado_pedido,
+           fecha_salida, fecha_planning, fecha_terminado,
+           fecha_carga_camion, fecha_en_tarragona, fecha_entrega_cliente
     FROM pedidos
   `)
 
@@ -65,7 +65,7 @@ async function main() {
   let errores      = 0
 
   for (const row of rows) {
-    const estadoActual    = row.estadoPedido as string
+    const estadoActual    = row['estado_pedido'] as string
     const estadoCalculado = calcularEstado(row)
 
     if (estadoActual === estadoCalculado) {
@@ -75,10 +75,10 @@ async function main() {
 
     try {
       await client.execute({
-        sql: `UPDATE pedidos SET estadoPedido = ?, updatedAt = ? WHERE id = ?`,
+        sql: `UPDATE pedidos SET estado_pedido = ?, updated_at = ? WHERE id = ?`,
         args: [estadoCalculado, new Date().toISOString(), row.id],
       })
-      console.log(`  ✅ ${row.numeroPedido}: "${estadoActual}" → "${estadoCalculado}"`)
+      console.log(`  ✅ ${row['numero_pedido']}: "${estadoActual}" → "${estadoCalculado}"`)
       actualizados++
     } catch (err) {
       console.error(`  ❌ Error en pedido ${row.numeroPedido}:`, err)
