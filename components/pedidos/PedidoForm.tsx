@@ -100,6 +100,31 @@ export function PedidoForm({ pedido, clientes = [], onSubmit, loading = false }:
   const [formData, setFormData] = useState<Partial<Pedido>>(
     pedido ? { ...defaultFormData, ...pedido } : defaultFormData
   )
+  const [pdfLoading, setPdfLoading] = useState(false)
+  const [pdfMsg, setPdfMsg] = useState<{ type: 'ok' | 'error'; text: string } | null>(null)
+
+  // ── Carga desde PDF ───────────────────────────────────────────────────────
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPdfLoading(true)
+    setPdfMsg(null)
+    try {
+      const fd = new FormData()
+      fd.append('pdf', file)
+      const res = await fetch('/api/pedidos/parse-pdf', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (!res.ok || !data.ok) throw new Error(data.error || 'Error desconocido')
+      setFormData(prev => ({ ...prev, ...data.campos }))
+      const n = Object.keys(data.campos).length
+      setPdfMsg({ type: 'ok', text: `✅ ${n} campos cargados desde el PDF. Revisa y completa los que falten.` })
+    } catch (err: any) {
+      setPdfMsg({ type: 'error', text: '❌ ' + (err.message || 'No se pudo leer el PDF') })
+    } finally {
+      setPdfLoading(false)
+      e.target.value = ''
+    }
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target
@@ -118,6 +143,34 @@ export function PedidoForm({ pedido, clientes = [], onSubmit, loading = false }:
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8 max-w-4xl">
+
+      {/* ── Carga desde PDF ── */}
+      {!pedido?.id && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center gap-4 flex-wrap">
+            <div>
+              <p className="text-sm font-semibold text-blue-900">📎 Cargar desde PDF</p>
+              <p className="text-xs text-blue-600 mt-0.5">Selecciona la Orden de Trabajo para pre-rellenar el formulario</p>
+            </div>
+            <label className={`cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition
+              ${pdfLoading ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-white text-blue-700 border-blue-300 hover:bg-blue-100'}`}>
+              {pdfLoading ? '⏳ Procesando...' : '📄 Seleccionar PDF'}
+              <input
+                type="file"
+                accept=".pdf"
+                className="hidden"
+                disabled={pdfLoading}
+                onChange={handlePdfUpload}
+              />
+            </label>
+          </div>
+          {pdfMsg && (
+            <p className={`mt-3 text-sm rounded px-3 py-2 ${pdfMsg.type === 'ok' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+              {pdfMsg.text}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Identificación */}
       <div>
