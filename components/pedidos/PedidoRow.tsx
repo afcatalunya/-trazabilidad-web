@@ -1,3 +1,5 @@
+'use client'
+
 import Link from 'next/link'
 import { EstadoBadge } from './EstadoBadge'
 import { formatDate } from '@/lib/utils'

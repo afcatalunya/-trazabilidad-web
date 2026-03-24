@@ -6,7 +6,7 @@ import { FiltrosPedidos } from '@/components/pedidos/FiltrosPedidos'
 import { EstadoBadge } from '@/components/pedidos/EstadoBadge'
 import { db } from '@/lib/db'
 import { pedidos } from '@/lib/schema'
-import { like, and, eq, or, sql } from 'drizzle-orm'
+import { like, and, eq, or } from 'drizzle-orm'
 
 export const dynamic = 'force-dynamic'
 

@@ -11,19 +11,23 @@ import { readFileSync, existsSync } from 'fs'
 import { resolve } from 'path'
 import * as XLSX from 'xlsx'
 
-// ─── Cargar .env ─────────────────────────────────────────────────────────────
-try {
-  const envFile = readFileSync(resolve(process.cwd(), '.env'), 'utf-8')
-  for (const line of envFile.split('\n')) {
-    const trimmed = line.trim()
-    if (!trimmed || trimmed.startsWith('#')) continue
-    const eqIndex = trimmed.indexOf('=')
-    if (eqIndex === -1) continue
-    const key = trimmed.slice(0, eqIndex).trim()
-    const value = trimmed.slice(eqIndex + 1).trim()
-    if (key && !process.env[key]) process.env[key] = value
-  }
-} catch {}
+// ─── Cargar .env y .env.local ────────────────────────────────────────────────
+function loadEnvFile(filename: string) {
+  try {
+    const envFile = readFileSync(resolve(process.cwd(), filename), 'utf-8')
+    for (const line of envFile.split('\n')) {
+      const trimmed = line.trim()
+      if (!trimmed || trimmed.startsWith('#')) continue
+      const eqIndex = trimmed.indexOf('=')
+      if (eqIndex === -1) continue
+      const key = trimmed.slice(0, eqIndex).trim()
+      const value = trimmed.slice(eqIndex + 1).trim()
+      if (key && !process.env[key]) process.env[key] = value
+    }
+  } catch {}
+}
+loadEnvFile('.env')
+loadEnvFile('.env.local')
 
 // ─── Conexión Turso ───────────────────────────────────────────────────────────
 const client = createClient({
@@ -82,7 +86,9 @@ function normalizarCategoria(val: any): string {
 // ─── Importación ─────────────────────────────────────────────────────────────
 async function importar() {
   const posiblesPaths = [
+    resolve(process.cwd(), 'scripts', 'Libro1.xlsx'),
     resolve(process.cwd(), 'scripts', 'trazab.xlsx'),
+    resolve(process.cwd(), 'Libro1.xlsx'),
     resolve(process.cwd(), 'trazab.xlsx'),
   ]
 
@@ -92,10 +98,15 @@ async function importar() {
   }
 
   if (!excelPath) {
-    console.error('❌ No se encontró trazab.xlsx.')
+    console.error('❌ No se encontró Libro1.xlsx ni trazab.xlsx.')
     console.error('   Cópialo dentro de la carpeta "scripts" del proyecto y vuelve a ejecutar.')
     process.exit(1)
   }
+
+  // Borrar pedidos existentes antes de importar datos reales de SharePoint
+  console.log('🗑️  Borrando pedidos existentes...')
+  await client.execute('DELETE FROM pedidos')
+  console.log('✅ Pedidos anteriores eliminados\n')
 
   console.log('📂 Leyendo:', excelPath)
   const wb = XLSX.readFile(excelPath, { cellDates: true })
