@@ -45,6 +45,15 @@ export function PedidoRow({ pedido, cliente = '', stripe = false }: PedidoRowPro
         {pedido.urgente === 'URGENTE' && (
           <span className="ml-1 text-red-500" title="Urgente">🚨</span>
         )}
+        {pedido.numComentarios > 0 && (
+          <span
+            className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full text-white font-bold"
+            style={{ fontSize: '9px', background: '#f97316', minWidth: '16px' }}
+            title={`${pedido.numComentarios} comentario${pedido.numComentarios > 1 ? 's' : ''}`}
+          >
+            {pedido.numComentarios > 9 ? '9+' : pedido.numComentarios}
+          </span>
+        )}
       </td>
 
       {/* Acciones rápidas — sticky col 2 */}
