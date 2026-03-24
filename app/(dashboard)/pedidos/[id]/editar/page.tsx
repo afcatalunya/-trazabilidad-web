@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { use, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Header } from '@/components/layout/Header'
 import { PedidoForm } from '@/components/pedidos/PedidoForm'
 import { Pedido } from '@/lib/utils'
 
 interface PageProps {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 interface Cliente {
@@ -16,6 +16,7 @@ interface Cliente {
 }
 
 export default function EditarPedidoPage({ params }: PageProps) {
+  const { id } = use(params)
   const router = useRouter()
   const [pedido, setPedido] = useState<Pedido | null>(null)
   const [clientes, setClientes] = useState<Cliente[]>([])
@@ -25,7 +26,7 @@ export default function EditarPedidoPage({ params }: PageProps) {
     const fetchData = async () => {
       try {
         const [pedidoRes, clientesRes] = await Promise.all([
-          fetch(`/api/pedidos/${params.id}`),
+          fetch(`/api/pedidos/${id}`),
           fetch('/api/clientes'),
         ])
 
@@ -42,12 +43,12 @@ export default function EditarPedidoPage({ params }: PageProps) {
     }
 
     fetchData()
-  }, [params.id, router])
+  }, [id, router])
 
   const handleSubmit = async (data: Partial<Pedido>) => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/pedidos/${params.id}`, {
+      const res = await fetch(`/api/pedidos/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -59,7 +60,7 @@ export default function EditarPedidoPage({ params }: PageProps) {
         throw new Error('Error al actualizar el pedido')
       }
 
-      router.push(`/pedidos/${params.id}`)
+      router.push(`/pedidos/${id}`)
       router.refresh()
     } catch (error) {
       console.error('Error:', error)
