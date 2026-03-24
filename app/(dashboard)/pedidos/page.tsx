@@ -6,7 +6,7 @@ import { FiltrosPedidos } from '@/components/pedidos/FiltrosPedidos'
 import { EstadoBadge } from '@/components/pedidos/EstadoBadge'
 import { db } from '@/lib/db'
 import { pedidos } from '@/lib/schema'
-import { like, and, eq, or } from 'drizzle-orm'
+import { like, and, eq, or, count, sql } from 'drizzle-orm'
 
 export const dynamic = 'force-dynamic'
 
@@ -96,14 +96,23 @@ export default async function PedidosPage({ searchParams }: PageProps) {
       .limit(limit)
       .offset(offset)
 
-    const countResult = await db.select({ id: pedidos.id }).from(pedidos).where(where)
-    total = countResult.length
+    // COUNT total con filtros (sin traer filas)
+    const [{ total: totalCount }] = await db
+      .select({ total: count() })
+      .from(pedidos)
+      .where(where)
+    total = totalCount
 
-    // Get counts per estado (no filters)
-    const allPedidos = await db.select({ estadoPedido: pedidos.estadoPedido }).from(pedidos)
-    for (const p of allPedidos) {
-      const e = p.estadoPedido || 'SIN PEDIDO DE COMPRA'
-      stats[e] = (stats[e] || 0) + 1
+    // KPIs: GROUP BY estado_pedido — solo devuelve un array pequeño
+    const kpiResult = await db
+      .select({
+        estadoPedido: sql<string>`COALESCE(${pedidos.estadoPedido}, 'SIN PEDIDO DE COMPRA')`,
+        total: count(),
+      })
+      .from(pedidos)
+      .groupBy(pedidos.estadoPedido)
+    for (const row of kpiResult) {
+      stats[row.estadoPedido] = (stats[row.estadoPedido] || 0) + row.total
     }
   } catch (err) {
     console.error('Error cargando pedidos:', err)
