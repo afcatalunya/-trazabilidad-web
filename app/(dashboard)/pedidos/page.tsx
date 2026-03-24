@@ -72,66 +72,72 @@ export default async function PedidosPage({ searchParams }: PageProps) {
   return (
     <>
       <Header title="Pedidos" />
-      <div className="flex-1 overflow-auto">
-        <div className="p-6">
-          <div className="mb-4 flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-gray-900">{total} Pedidos</h3>
-            <Link href="/pedidos/nuevo">
-              <Button variant="primary">+ Nuevo Pedido</Button>
-            </Link>
-          </div>
 
-          <FiltrosPedidos />
+      {/* Zona fija: título + botón */}
+      <div className="px-6 pt-4 pb-2 flex justify-between items-center flex-shrink-0">
+        <h3 className="text-lg font-semibold text-gray-900">{total} Pedidos</h3>
+        <Link href="/pedidos/nuevo">
+          <Button variant="primary">+ Nuevo Pedido</Button>
+        </Link>
+      </div>
 
-          <div className="bg-white rounded-lg shadow mt-4 overflow-auto" style={{ maxHeight: 'calc(100vh - 240px)' }}>
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50 sticky top-0 z-10">
-                <tr>
-                  {[
-                    'Número','Tipo','F.Pedido','Cliente','Nº Cli','Comercial',
-                    'Categoría','Referencia','Acabado','Color','Proveedor','Doc.Salida',
-                    'F.Salida','F.Planning','F.Terminado','F.Camión','F.Tarragona','F.Entrega',
-                    'Estado','Incidencia','Almacén','Urgente'
-                  ].map(h => (
-                    <th key={h} className="px-3 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {result.map((pedido) => (
-                  <PedidoRow
-                    key={pedido.id}
-                    pedido={pedido}
-                    cliente={pedido.cliente || '-'}
-                  />
+      {/* Zona fija: filtros */}
+      <div className="px-6 pb-2 flex-shrink-0">
+        <FiltrosPedidos />
+      </div>
+
+      {/* Tabla con scroll propio — ocupa el resto de la pantalla */}
+      <div className="flex-1 min-h-0 px-6 pb-2 overflow-hidden">
+        <div className="bg-white rounded-lg shadow h-full overflow-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50 sticky top-0 z-10">
+              <tr>
+                {[
+                  'Número','Tipo','F.Pedido','Cliente','Nº Cli','Comercial',
+                  'Categoría','Referencia','Acabado','Color','Proveedor','Doc.Salida',
+                  'F.Salida','F.Planning','F.Terminado','F.Camión','F.Tarragona','F.Entrega',
+                  'Estado','Incidencia','Almacén','Urgente'
+                ].map(h => (
+                  <th key={h} className="px-3 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap bg-gray-50">
+                    {h}
+                  </th>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {result.map((pedido) => (
+                <PedidoRow
+                  key={pedido.id}
+                  pedido={pedido}
+                  cliente={pedido.cliente || '-'}
+                />
+              ))}
+              {result.length === 0 && (
+                <tr>
+                  <td colSpan={22} className="text-center py-12 text-gray-400">
+                    No hay pedidos que mostrar
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-          {result.length === 0 && (
-            <div className="text-center py-12 bg-white rounded-lg shadow mt-4">
-              <p className="text-gray-500 text-lg">No hay pedidos que mostrar</p>
-            </div>
+      {/* Zona fija: paginación */}
+      <div className="px-6 py-3 flex justify-between items-center text-sm text-gray-600 flex-shrink-0 border-t border-gray-100">
+        <span>Página {page} de {totalPages || 1}</span>
+        <div className="flex gap-2">
+          {page > 1 && (
+            <Link href={`/pedidos?page=${page - 1}${search ? `&search=${search}` : ''}${estado ? `&estado=${estado}` : ''}`}>
+              <Button variant="secondary" size="sm">← Anterior</Button>
+            </Link>
           )}
-
-          <div className="mt-4 flex justify-between items-center text-sm text-gray-600">
-            <span>Página {page} de {totalPages || 1}</span>
-            <div className="flex gap-2">
-              {page > 1 && (
-                <Link href={`/pedidos?page=${page - 1}${search ? `&search=${search}` : ''}${estado ? `&estado=${estado}` : ''}`}>
-                  <Button variant="secondary" size="sm">← Anterior</Button>
-                </Link>
-              )}
-              {page < totalPages && (
-                <Link href={`/pedidos?page=${page + 1}${search ? `&search=${search}` : ''}${estado ? `&estado=${estado}` : ''}`}>
-                  <Button variant="secondary" size="sm">Siguiente →</Button>
-                </Link>
-              )}
-            </div>
-          </div>
+          {page < totalPages && (
+            <Link href={`/pedidos?page=${page + 1}${search ? `&search=${search}` : ''}${estado ? `&estado=${estado}` : ''}`}>
+              <Button variant="secondary" size="sm">Siguiente →</Button>
+            </Link>
+          )}
         </div>
       </div>
     </>
