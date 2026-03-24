@@ -12,6 +12,9 @@ import { like, and, eq, or, count, sql } from 'drizzle-orm'
 
 export const dynamic = 'force-dynamic'
 
+// Estados que se ocultan en la vista "activos" (vista por defecto)
+const ESTADOS_INACTIVOS = ['EN ALMACÉN', 'ENTREGADO', 'ANULADO']
+
 interface PageProps {
   searchParams: Promise<{
     search?: string
@@ -20,6 +23,7 @@ interface PageProps {
     categoria?: string
     urgente?: string
     page?: string
+    vista?: string   // 'activos' (default) | 'todos'
   }>
 }
 
@@ -32,6 +36,7 @@ export default async function PedidosPage({ searchParams }: PageProps) {
   const categoria = params.categoria || ''
   const urgente   = params.urgente   || ''
   const page      = parseInt(params.page || '1')
+  const vista     = params.vista     || 'activos'   // 'activos' por defecto
   const limit     = 50
   const offset    = (page - 1) * limit
 
@@ -50,10 +55,22 @@ export default async function PedidosPage({ searchParams }: PageProps) {
   if (categoria) conditions.push(eq(pedidos.categoria, categoria))
   if (urgente === 'true') conditions.push(eq(pedidos.urgente, 'URGENTE'))
 
+  // Vista activos: excluir EN ALMACÉN, ENTREGADO, ANULADO (salvo que el usuario
+  // haya seleccionado explícitamente uno de esos estados desde el KPI)
+  const vistaActiva = vista !== 'todos' && !estado
+  if (vistaActiva) {
+    conditions.push(
+      sql`COALESCE(${pedidos.estadoPedido}, '') NOT IN (${sql.join(
+        ESTADOS_INACTIVOS.map(e => sql`${e}`), sql`, `
+      )})`
+    )
+  }
+
   const where = conditions.length > 0 ? and(...conditions) : undefined
 
   let result: any[] = []
   let total = 0
+  let totalGlobal = 0  // total sin filtro de vista (para el badge "Ver todos")
 
   // Stats for KPI cards (always unfiltered)
   let stats: Record<string, number> = {}
@@ -73,6 +90,12 @@ export default async function PedidosPage({ searchParams }: PageProps) {
       .from(pedidos)
       .where(where)
     total = totalCount
+
+    // COUNT global sin filtro vista (para el botón toggle)
+    const [{ total: globalCount }] = await db
+      .select({ total: count() })
+      .from(pedidos)
+    totalGlobal = globalCount
 
     // KPIs: GROUP BY estado_pedido — solo devuelve un array pequeño
     const kpiResult = await db
@@ -100,8 +123,13 @@ export default async function PedidosPage({ searchParams }: PageProps) {
     urgente   ? `urgente=${urgente}` : '',
   ].filter(Boolean).join('&')
 
-  const estadoUrl = (e: string) => `/pedidos?estado=${encodeURIComponent(e)}${baseParams ? `&${baseParams}` : ''}`
+  const estadoUrl = (e: string) =>
+    `/pedidos?estado=${encodeURIComponent(e)}&vista=todos${baseParams ? `&${baseParams}` : ''}`
   const clearUrl = `/pedidos${baseParams ? `?${baseParams}` : ''}`
+
+  // URLs para toggle vista
+  const urlTodos    = `/pedidos?vista=todos${baseParams ? `&${baseParams}` : ''}`
+  const urlActivos  = `/pedidos${baseParams ? `?${baseParams}` : ''}`
 
   const KPI_ITEMS = [
     { label: 'Todos',       value: totalAll,                                      color: '#2d9e4e', key: '' },
@@ -133,15 +161,43 @@ export default async function PedidosPage({ searchParams }: PageProps) {
         </div>
       </div>
 
-      {/* Toolbar: count + new button */}
+      {/* Toolbar: count + toggle vista + new button */}
       <div className="px-6 pb-2 flex justify-between items-center flex-shrink-0">
-        <p className="text-sm text-gray-500 font-medium">
-          {total === totalAll ? (
-            <><span className="text-gray-800 font-semibold">{total}</span> pedidos en total</>
+        <div className="flex items-center gap-3">
+          <p className="text-sm text-gray-500 font-medium">
+            {vistaActiva ? (
+              <><span className="text-gray-800 font-semibold">{total}</span> pedidos activos</>
+            ) : total === totalAll ? (
+              <><span className="text-gray-800 font-semibold">{total}</span> pedidos en total</>
+            ) : (
+              <><span className="text-gray-800 font-semibold">{total}</span> de {totalAll} pedidos</>
+            )}
+          </p>
+          {/* Toggle vista activos / todos */}
+          {vistaActiva ? (
+            <Link
+              href={urlTodos}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-colors"
+              style={{ background: '#f1f5f9', color: '#64748b', borderColor: '#e2e8f0' }}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+              Ver todos ({totalGlobal})
+            </Link>
           ) : (
-            <><span className="text-gray-800 font-semibold">{total}</span> de {totalAll} pedidos</>
+            <Link
+              href={urlActivos}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-colors"
+              style={{ background: '#f0faf4', color: '#1a5c35', borderColor: '#b3e4c8' }}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Solo activos
+            </Link>
           )}
-        </p>
+        </div>
         <div className="flex items-center gap-2">
           <BotonCargaMurcia />
           <Link href="/pedidos/nuevo">
@@ -222,12 +278,12 @@ export default async function PedidosPage({ searchParams }: PageProps) {
         <span className="text-xs text-gray-400">Página {page} de {totalPages || 1}</span>
         <div className="flex gap-2">
           {page > 1 && (
-            <Link href={`/pedidos?page=${page - 1}${search ? `&search=${search}` : ''}${estado ? `&estado=${estado}` : ''}`}>
+            <Link href={`/pedidos?page=${page - 1}${search ? `&search=${search}` : ''}${estado ? `&estado=${estado}` : ''}${vista !== 'activos' ? `&vista=${vista}` : ''}`}>
               <Button variant="secondary" size="sm">← Anterior</Button>
             </Link>
           )}
           {page < totalPages && (
-            <Link href={`/pedidos?page=${page + 1}${search ? `&search=${search}` : ''}${estado ? `&estado=${estado}` : ''}`}>
+            <Link href={`/pedidos?page=${page + 1}${search ? `&search=${search}` : ''}${estado ? `&estado=${estado}` : ''}${vista !== 'activos' ? `&vista=${vista}` : ''}`}>
               <Button variant="secondary" size="sm">Siguiente →</Button>
             </Link>
           )}
