@@ -16,9 +16,9 @@ export function Header({ title = '' }: HeaderProps) {
       <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
 
       <div className="flex items-center gap-4">
-        {process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA && (
-          <span className="hidden sm:inline text-xs bg-gray-100 text-gray-400 px-2 py-0.5 rounded font-mono">
-            {process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA.slice(0, 7)}
+        {process.env.NEXT_PUBLIC_BUILD_TIME && (
+          <span className="hidden sm:inline text-xs bg-gray-100 text-gray-400 px-2 py-0.5 rounded font-mono" title="Versión desplegada">
+            {new Date(process.env.NEXT_PUBLIC_BUILD_TIME).toLocaleString('es-ES', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })}
           </span>
         )}
         {session?.user && (
