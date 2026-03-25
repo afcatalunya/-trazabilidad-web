@@ -11,7 +11,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { nombre, rol, activo, password } = await req.json()
+  const { nombre, email, rol, activo, password } = await req.json()
   const { id: idStr } = await params
   const id = parseInt(idStr)
   const adminUser = (session.user as any)?.name || (session.user as any)?.email || 'ADMIN'
@@ -23,11 +23,15 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     fechaActualizacion: new Date().toISOString(),
   }
 
+  // Actualizar email si se proporciona
+  if (email && email.trim()) {
+    updates.email = email.trim().toLowerCase()
+  }
+
   if (password) {
     updates.password = await bcrypt.hash(password, 10)
-    // Registrar cambio de contraseña en historial para auditoría
     await db.insert(historial).values({
-      numeroPedido: `ADMIN:USUARIO:${id}`,   // prefijo para distinguir de pedidos
+      numeroPedido: `ADMIN:USUARIO:${id}`,
       accion:       'CAMBIO_CONTRASEÑA',
       detalle:      `Contraseña cambiada para "${nombre}" (ID ${id}) por ${adminUser}`,
       usuario:      adminUser,

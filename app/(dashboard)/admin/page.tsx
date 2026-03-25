@@ -297,7 +297,7 @@ export default function AdminPage() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
   const [form, setForm] = useState(emptyForm)
   const [editando, setEditando] = useState<Usuario | null>(null)
-  const [editForm, setEditForm] = useState({ nombre: '', rol: 'OPERADOR', activo: true, password: '' })
+  const [editForm, setEditForm] = useState({ nombre: '', email: '', rol: 'OPERADOR', activo: true, password: '' })
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState<{ tipo: 'ok' | 'error'; texto: string } | null>(null)
   const [emailLoading, setEmailLoading] = useState<string | null>(null)
@@ -491,7 +491,7 @@ export default function AdminPage() {
                       </td>
                       <td className="py-3 space-x-2">
                         <button
-                          onClick={() => { setEditando(u); setEditForm({ nombre: u.nombre, rol: u.rol, activo: !!u.activo, password: '' }) }}
+                          onClick={() => { setEditando(u); setEditForm({ nombre: u.nombre, email: u.email, rol: u.rol, activo: !!u.activo, password: '' }) }}
                           className="text-blue-600 hover:underline text-xs font-medium">
                           Editar
                         </button>
@@ -523,6 +523,16 @@ export default function AdminPage() {
                       value={editForm.nombre}
                       onChange={e => setEditForm(p => ({ ...p, nombre: e.target.value }))}
                     />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input
+                      type="email"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      value={editForm.email}
+                      onChange={e => setEditForm(p => ({ ...p, email: e.target.value }))}
+                    />
+                    <p className="text-xs text-gray-400 mt-1">Edita el email si hay un error ortográfico</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
