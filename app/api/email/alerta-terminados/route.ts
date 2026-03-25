@@ -1,15 +1,15 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { pedidos } from '@/lib/schema'
 import { isNotNull, isNull, and } from 'drizzle-orm'
-import { auth } from '@/lib/auth'
+import { isCronOrAdmin } from '@/lib/cron-auth'
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  if (!(await isCronOrAdmin(req))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
-    const session = await auth()
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    // Pedidos con FechaTerminado rellena pero FechaEnTarragona vacía
     const terminadosSinLlegar = await db
       .select()
       .from(pedidos)
@@ -20,7 +20,6 @@ export async function POST() {
         )
       )
 
-    // Filtrado adicional en JS para mayor seguridad
     const filtrados = terminadosSinLlegar.filter(
       p => p.fechaTerminado && !p.fechaEnTarragona && p.estadoPedido !== 'ANULADO'
     )
@@ -33,4 +32,8 @@ export async function POST() {
     console.error('Error alerta terminados:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+}
+
+export async function GET(req: NextRequest) {
+  return POST(req)
 }

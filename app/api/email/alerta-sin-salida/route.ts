@@ -1,17 +1,17 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { pedidos } from '@/lib/schema'
-import { isNull, and, ne, or, isNotNull } from 'drizzle-orm'
-import { auth } from '@/lib/auth'
+import { isNull, and, ne, isNotNull } from 'drizzle-orm'
+import { isCronOrAdmin } from '@/lib/cron-auth'
 
 const DIAS_LIMITE = 3
 
-export async function POST() {
-  try {
-    const session = await auth()
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+export async function POST(req: NextRequest) {
+  if (!(await isCronOrAdmin(req))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
-    // Pedidos SIN FechaSalida, no anulados, no entregados
+  try {
     const sinSalida = await db
       .select()
       .from(pedidos)
@@ -24,7 +24,6 @@ export async function POST() {
         )
       )
 
-    // Filtrar los que llevan más de DIAS_LIMITE días desde la fecha de pedido
     const hoy = Date.now()
     const filtrados = sinSalida
       .filter(p => {
@@ -46,4 +45,8 @@ export async function POST() {
     console.error('Error alerta sin salida:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+}
+
+export async function GET(req: NextRequest) {
+  return POST(req)
 }
