@@ -20,11 +20,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const file = formData.get('pdf') as File | null
   if (!file) return NextResponse.json({ error: 'No se recibió ningún archivo' }, { status: 400 })
 
+  const blobToken = process.env.BLOB_READ_WRITE_TOKEN
+  if (!blobToken) {
+    return NextResponse.json({ error: 'BLOB_READ_WRITE_TOKEN no configurado en el servidor' }, { status: 500 })
+  }
+
   // Borrar PDF anterior si existe
   if (pedido.pdfAdjunto) {
     try {
       const { del } = await import('@vercel/blob')
-      await del(pedido.pdfAdjunto)
+      await del(pedido.pdfAdjunto, { token: blobToken })
     } catch {
       // No falla si no se puede borrar el anterior
     }
@@ -38,6 +43,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const blob = await put(nombreArchivo, buffer, {
       access: 'public',
       contentType: 'application/pdf',
+      token: blobToken,
     })
 
     await db.update(pedidos)
@@ -65,7 +71,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   if (pedido.pdfAdjunto) {
     try {
       const { del } = await import('@vercel/blob')
-      await del(pedido.pdfAdjunto)
+      const token = process.env.BLOB_READ_WRITE_TOKEN
+      await del(pedido.pdfAdjunto, ...(token ? [{ token }] : []))
     } catch {
       // Continuar aunque no se pueda borrar de Blob
     }

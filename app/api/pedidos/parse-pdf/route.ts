@@ -18,10 +18,12 @@ export async function POST(request: Request) {
     let pdfAdjunto: string | null = null
     try {
       const { put } = await import('@vercel/blob')
+      const blobToken = process.env.BLOB_READ_WRITE_TOKEN
       const nombreArchivo = `pedidos/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`
       const blob = await put(nombreArchivo, buffer, {
         access: 'public',
         contentType: 'application/pdf',
+        ...(blobToken ? { token: blobToken } : {}),
       })
       pdfAdjunto = blob.url
     } catch (blobErr) {
