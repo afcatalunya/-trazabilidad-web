@@ -327,6 +327,78 @@ export async function enviarAlertaTerminadosSinCamion(pedidos: Array<{
   })
 }
 
+// ─── ALERTA: Incidencias sin cambio de estado +5 días ────────────────────────
+export async function enviarAlertaIncidenciasParadas(incidenciasList: Array<{
+  id: number
+  numeroPedido: string
+  tipoIncidencia?: string | null
+  descripcion?: string | null
+  estadoIncidencia: string
+  ultimoCambioEstado?: string | null
+  createdAt?: string | null
+  diasParada: number
+}>) {
+  if (!process.env.EMAIL_SMTP_HOST || incidenciasList.length === 0) return
+
+  const EMAIL_JUANC = process.env.EMAIL_JUANC || 'juanc@aluminiosfranco.es'
+  const appUrl = getAppUrl()
+
+  const filas = incidenciasList.map(inc => {
+    const colorDias = inc.diasParada > 10 ? '#dc2626' : inc.diasParada > 7 ? '#d97706' : '#b45309'
+    const referencia = inc.ultimoCambioEstado || inc.createdAt || ''
+    const fechaRef = referencia ? new Date(referencia).toLocaleDateString('es-ES') : '—'
+    return `
+      <tr>
+        <td style="padding:8px 12px;border-bottom:1px solid #f1f5f9;font-weight:bold;color:#1a5c35;">${inc.numeroPedido}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #f1f5f9;color:#4b5563;">${inc.tipoIncidencia || '—'}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #f1f5f9;color:#4b5563;max-width:200px;">${inc.descripcion || '—'}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #f1f5f9;">
+          <span style="background:#fff3e0;color:#c2410c;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600;">${inc.estadoIncidencia}</span>
+        </td>
+        <td style="padding:8px 12px;border-bottom:1px solid #f1f5f9;font-weight:bold;color:${colorDias};">${inc.diasParada} días</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #f1f5f9;font-size:12px;color:#6b7280;">${fechaRef}</td>
+      </tr>`
+  }).join('')
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:750px;margin:0 auto;">
+      <div style="background:#1a5c35;color:white;padding:18px 24px;border-radius:8px 8px 0 0;">
+        <h2 style="margin:0;font-size:18px;">⚠️ Incidencias sin gestión hace +5 días</h2>
+        <p style="margin:6px 0 0;opacity:0.85;font-size:13px;">Aluminios Franco · ${new Date().toLocaleDateString('es-ES')}</p>
+      </div>
+      <div style="background:#fffbeb;border:1px solid #fde68a;padding:14px 20px;font-size:13px;color:#92400e;">
+        Las siguientes <strong>${incidenciasList.length} incidencia${incidenciasList.length > 1 ? 's' : ''}</strong>
+        llevan más de <strong>5 días</strong> sin cambio de estado.
+        <a href="${appUrl}/incidencias" style="color:#1a5c35;font-weight:bold;text-decoration:none;"> → Ver en la app</a>
+      </div>
+      <div style="border:1px solid #e5e7eb;border-top:none;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="background:#f9fafb;">
+              <th style="padding:10px 12px;text-align:left;font-size:11px;color:#6b7280;text-transform:uppercase;">Pedido</th>
+              <th style="padding:10px 12px;text-align:left;font-size:11px;color:#6b7280;text-transform:uppercase;">Tipo</th>
+              <th style="padding:10px 12px;text-align:left;font-size:11px;color:#6b7280;text-transform:uppercase;">Descripción</th>
+              <th style="padding:10px 12px;text-align:left;font-size:11px;color:#6b7280;text-transform:uppercase;">Estado</th>
+              <th style="padding:10px 12px;text-align:left;font-size:11px;color:#6b7280;text-transform:uppercase;">Sin cambio</th>
+              <th style="padding:10px 12px;text-align:left;font-size:11px;color:#6b7280;text-transform:uppercase;">Último cambio</th>
+            </tr>
+          </thead>
+          <tbody>${filas}</tbody>
+        </table>
+      </div>
+      <div style="background:#f9fafb;padding:12px 20px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;font-size:11px;color:#9ca3af;">
+        Email automático del sistema de trazabilidad de Aluminios Franco.
+      </div>
+    </div>`
+
+  await getTransporter().sendMail({
+    from:    FROM,
+    to:      EMAIL_JUANC,
+    subject: `⚠️ ${incidenciasList.length} incidencia${incidenciasList.length > 1 ? 's' : ''} sin gestión hace +5 días`,
+    html,
+  })
+}
+
 // ─── CARGA CAMIÓN MURCIA ──────────────────────────────────────────────────────
 export async function enviarEmailCargaMurcia(pedidos: Array<{
   numeroPedido: string
