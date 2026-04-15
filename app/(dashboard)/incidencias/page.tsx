@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
@@ -16,6 +16,9 @@ interface Incidencia {
   estadoIncidencia: string
   fechaResolucion?: string
   comentarios?: string
+  foto?: string | null
+  accionesRealizadas?: string | null
+  ultimoCambioEstado?: string | null
   createdAt?: string
   pedidoId?: number | null
 }
@@ -51,13 +54,23 @@ const ESTADO_NEXT: Record<string, string> = {
 }
 
 export default function IncidenciasPage() {
-  const [incidencias, setIncidencias] = useState<Incidencia[]>([])
-  const [estadoFiltro, setEstadoFiltro]   = useState('')
-  const [showForm, setShowForm]           = useState(false)
-  const [loading, setLoading]             = useState(false)
-  const [editando, setEditando]           = useState<Incidencia | null>(null)
-  const [formData, setFormData]           = useState({ numeroPedido: '', tipoIncidencia: '', descripcion: '', estadoIncidencia: 'ABIERTA' })
-  const [editForm, setEditForm]           = useState({ tipoIncidencia: '', descripcion: '', estadoIncidencia: '', fechaResolucion: '', comentarios: '' })
+  const [incidencias, setIncidencias]   = useState<Incidencia[]>([])
+  const [estadoFiltro, setEstadoFiltro] = useState('')
+  const [showForm, setShowForm]         = useState(false)
+  const [loading, setLoading]           = useState(false)
+  const [editando, setEditando]         = useState<Incidencia | null>(null)
+  const [fotoPreview, setFotoPreview]   = useState<string | null>(null)
+  const [subiendo, setSubiendo]         = useState(false)
+  const fileInputRef                    = useRef<HTMLInputElement>(null)
+
+  const [formData, setFormData] = useState({
+    numeroPedido: '', tipoIncidencia: '', descripcion: '',
+    estadoIncidencia: 'ABIERTA', foto: '',
+  })
+  const [editForm, setEditForm] = useState({
+    tipoIncidencia: '', descripcion: '', estadoIncidencia: '',
+    fechaResolucion: '', comentarios: '', accionesRealizadas: '',
+  })
 
   useEffect(() => { fetchIncidencias() }, [])
 
@@ -69,38 +82,92 @@ export default function IncidenciasPage() {
 
   const filteredIncidencias = incidencias.filter(i => !estadoFiltro || i.estadoIncidencia === estadoFiltro)
 
+  // ── Subir foto a Blob ───────────────────────────────────────────────────────
+  const handleFotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setSubiendo(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/incidencias/foto', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (data.url) {
+        setFormData(prev => ({ ...prev, foto: data.url }))
+        setFotoPreview(data.url)
+      }
+    } catch { alert('Error al subir la foto') }
+    finally { setSubiendo(false) }
+  }
+
+  // ── Crear incidencia ────────────────────────────────────────────────────────
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault(); setLoading(true)
     try {
-      const res = await fetch('/api/incidencias', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) })
+      const res = await fetch('/api/incidencias', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
       if (!res.ok) throw new Error()
-      setFormData({ numeroPedido: '', tipoIncidencia: '', descripcion: '', estadoIncidencia: 'ABIERTA' })
-      setShowForm(false); fetchIncidencias()
+      setFormData({ numeroPedido: '', tipoIncidencia: '', descripcion: '', estadoIncidencia: 'ABIERTA', foto: '' })
+      setFotoPreview(null)
+      setShowForm(false)
+      fetchIncidencias()
     } catch { alert('Error al crear incidencia') } finally { setLoading(false) }
   }
 
+  // ── Editar incidencia ───────────────────────────────────────────────────────
   const handleEdit = (inc: Incidencia) => {
     setEditando(inc)
-    setEditForm({ tipoIncidencia: inc.tipoIncidencia || '', descripcion: inc.descripcion || '', estadoIncidencia: inc.estadoIncidencia || 'ABIERTA', fechaResolucion: inc.fechaResolucion || '', comentarios: inc.comentarios || '' })
+    setEditForm({
+      tipoIncidencia:    inc.tipoIncidencia    || '',
+      descripcion:       inc.descripcion       || '',
+      estadoIncidencia:  inc.estadoIncidencia  || 'ABIERTA',
+      fechaResolucion:   inc.fechaResolucion   || '',
+      comentarios:       inc.comentarios       || '',
+      accionesRealizadas: inc.accionesRealizadas || '',
+    })
   }
 
   const handleSaveEdit = async () => {
-    if (!editando) return; setLoading(true)
+    if (!editando) return
+    // Validar acciones realizadas si cambia el estado
+    const cambiaEstado = editForm.estadoIncidencia !== editando.estadoIncidencia
+    if (cambiaEstado && !editForm.accionesRealizadas.trim()) {
+      alert('Debes indicar las acciones realizadas al cambiar el estado.')
+      return
+    }
+    setLoading(true)
     try {
-      const res = await fetch(`/api/incidencias/${editando.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(editForm) })
+      const res = await fetch(`/api/incidencias/${editando.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm),
+      })
       if (!res.ok) throw new Error()
-      setEditando(null); fetchIncidencias()
+      setEditando(null)
+      fetchIncidencias()
     } catch { alert('Error al guardar') } finally { setLoading(false) }
   }
 
-  const handleAvanzarEstado = async (inc: Incidencia) => {
-    const nextEstado = ESTADO_NEXT[inc.estadoIncidencia]
-    if (!nextEstado) return
-    await fetch(`/api/incidencias/${inc.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...inc, estadoIncidencia: nextEstado }) })
-    fetchIncidencias()
+  // ── Avanzar estado rápido (pide acciones si es necesario) ──────────────────
+  const handleAvanzarEstado = (inc: Incidencia) => {
+    // Abre el modal de edición con el nuevo estado preseleccionado
+    // para que el usuario introduzca las acciones realizadas
+    setEditando(inc)
+    setEditForm({
+      tipoIncidencia:     inc.tipoIncidencia    || '',
+      descripcion:        inc.descripcion       || '',
+      estadoIncidencia:   ESTADO_NEXT[inc.estadoIncidencia] || inc.estadoIncidencia,
+      fechaResolucion:    inc.fechaResolucion   || '',
+      comentarios:        inc.comentarios       || '',
+      accionesRealizadas: '',
+    })
   }
 
   const kpis = ESTADOS.map(e => ({ ...e, count: incidencias.filter(i => i.estadoIncidencia === e.value).length }))
+  const estadoCambia = editando && editForm.estadoIncidencia !== editando.estadoIncidencia
 
   return (
     <>
@@ -146,9 +213,29 @@ export default function IncidenciasPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
                   <textarea value={formData.descripcion} onChange={e => setFormData({...formData, descripcion: e.target.value})} rows={2} placeholder="Describe la incidencia..." />
                 </div>
+
+                {/* Foto */}
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Foto de la incidencia (opcional)</label>
+                  <div className="flex items-center gap-3">
+                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFotoChange} />
+                    <button type="button" onClick={() => fileInputRef.current?.click()}
+                      className="text-sm px-3 py-1.5 rounded border border-gray-300 text-gray-600 hover:bg-gray-50 flex items-center gap-1.5">
+                      📷 {subiendo ? 'Subiendo...' : 'Adjuntar foto'}
+                    </button>
+                    {fotoPreview && (
+                      <div className="flex items-center gap-2">
+                        <img src={fotoPreview} alt="Preview" className="h-10 w-10 object-cover rounded border border-gray-200" />
+                        <button type="button" onClick={() => { setFotoPreview(null); setFormData(p => ({...p, foto: ''})) }}
+                          className="text-xs text-red-400 hover:text-red-600">✕ Eliminar</button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div className="col-span-2 flex gap-2">
-                  <Button type="submit" disabled={loading}>{loading ? 'Creando...' : 'Crear'}</Button>
-                  <Button variant="secondary" onClick={() => setShowForm(false)}>Cancelar</Button>
+                  <Button type="submit" disabled={loading || subiendo}>{loading ? 'Creando...' : 'Crear'}</Button>
+                  <Button variant="secondary" onClick={() => { setShowForm(false); setFotoPreview(null) }}>Cancelar</Button>
                 </div>
               </form>
             </div>
@@ -172,20 +259,23 @@ export default function IncidenciasPage() {
                   {filteredIncidencias.map(inc => (
                     <tr key={inc.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3 text-sm font-semibold">
-                        {inc.pedidoId ? (
-                          <Link
-                            href={`/pedidos/${inc.pedidoId}`}
-                            className="hover:underline underline-offset-2"
-                            style={{ color: '#1a5c35' }}
-                          >
-                            {inc.numeroPedido}
-                          </Link>
-                        ) : (
-                          <span className="text-gray-900">{inc.numeroPedido}</span>
-                        )}
+                        <div className="flex items-center gap-1.5">
+                          {inc.pedidoId ? (
+                            <Link href={`/pedidos/${inc.pedidoId}`} className="hover:underline underline-offset-2" style={{ color: '#1a5c35' }}>
+                              {inc.numeroPedido}
+                            </Link>
+                          ) : (
+                            <span className="text-gray-900">{inc.numeroPedido}</span>
+                          )}
+                          {inc.foto && (
+                            <a href={inc.foto} target="_blank" rel="noopener noreferrer" title="Ver foto adjunta" className="text-blue-400 hover:text-blue-600">
+                              📷
+                            </a>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">{inc.tipoIncidencia || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">{inc.descripcion || '-'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate" title={inc.descripcion || ''}>{inc.descripcion || '-'}</td>
                       <td className="px-4 py-3"><Badge variant={ESTADO_COLOR[inc.estadoIncidencia] as any}>{inc.estadoIncidencia}</Badge></td>
                       <td className="px-4 py-3 text-xs text-gray-500">{inc.fechaIncidencia ? new Date(inc.fechaIncidencia).toLocaleDateString('es-ES') : '-'}</td>
                       <td className="px-4 py-3">
@@ -215,8 +305,17 @@ export default function IncidenciasPage() {
       {/* Modal edición */}
       {editando && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.4)' }} onClick={() => setEditando(null)}>
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-lg" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <h3 className="font-semibold text-gray-800 mb-4">Editar Incidencia — {editando.numeroPedido}</h3>
+
+            {/* Foto existente */}
+            {editando.foto && (
+              <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                <p className="text-xs text-gray-500 mb-2 font-medium">📷 Foto adjunta</p>
+                <img src={editando.foto} alt="Foto incidencia" className="max-h-40 rounded border border-gray-200 object-contain" />
+              </div>
+            )}
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
@@ -230,9 +329,25 @@ export default function IncidenciasPage() {
                   {ESTADOS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                 </select>
               </div>
+
+              {/* Acciones realizadas — obligatorio si cambia estado */}
+              <div>
+                <label className="block text-sm font-medium mb-1" style={{ color: estadoCambia ? '#dc2626' : '#374151' }}>
+                  Acciones realizadas {estadoCambia && <span className="text-red-500">* (obligatorio al cambiar estado)</span>}
+                </label>
+                <textarea
+                  value={editForm.accionesRealizadas}
+                  onChange={e => setEditForm({...editForm, accionesRealizadas: e.target.value})}
+                  rows={3}
+                  className="w-full"
+                  placeholder="Describe las acciones tomadas..."
+                  style={{ borderColor: estadoCambia && !editForm.accionesRealizadas.trim() ? '#ef4444' : undefined }}
+                />
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-                <textarea value={editForm.descripcion} onChange={e => setEditForm({...editForm, descripcion: e.target.value})} rows={3} className="w-full" />
+                <textarea value={editForm.descripcion} onChange={e => setEditForm({...editForm, descripcion: e.target.value})} rows={2} className="w-full" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Resolución</label>

@@ -56,13 +56,16 @@ export async function POST(req: NextRequest) {
     const result = await db
       .insert(incidencias)
       .values({
-        numeroPedido:     body.numeroPedido || '',
-        tipoSalida:       body.tipoSalida || null,
-        fechaIncidencia:  body.fechaIncidencia || new Date().toISOString().split('T')[0],
-        tipoIncidencia:   body.tipoIncidencia || null,
-        descripcion:      body.descripcion || null,
-        estadoIncidencia: body.estadoIncidencia || 'ABIERTA',
-        comentarios:      body.comentarios || null,
+        numeroPedido:       body.numeroPedido || '',
+        tipoSalida:         body.tipoSalida || null,
+        fechaIncidencia:    body.fechaIncidencia || new Date().toISOString().split('T')[0],
+        tipoIncidencia:     body.tipoIncidencia || null,
+        descripcion:        body.descripcion || null,
+        estadoIncidencia:   body.estadoIncidencia || 'ABIERTA',
+        comentarios:        body.comentarios || null,
+        foto:               body.foto || null,
+        accionesRealizadas: body.accionesRealizadas || null,
+        ultimoCambioEstado: new Date().toISOString(),
       })
       .returning()
 

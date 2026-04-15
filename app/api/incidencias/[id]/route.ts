@@ -53,15 +53,22 @@ export async function PUT(
     const incidenciaId = parseInt(id)
     const body = await req.json()
 
+    // Obtener estado actual para detectar cambio
+    const [actual] = await db.select().from(incidencias).where(eq(incidencias.id, incidenciaId)).limit(1)
+    const cambioEstado = actual && body.estadoIncidencia && body.estadoIncidencia !== actual.estadoIncidencia
+
     const result = await db
       .update(incidencias)
       .set({
-        tipoIncidencia:   body.tipoIncidencia,
-        descripcion:      body.descripcion,
-        estadoIncidencia: body.estadoIncidencia,
-        fechaResolucion:  body.fechaResolucion,
-        comentarios:      body.comentarios,
-        updatedAt:        new Date().toISOString(),
+        tipoIncidencia:      body.tipoIncidencia,
+        descripcion:         body.descripcion,
+        estadoIncidencia:    body.estadoIncidencia,
+        fechaResolucion:     body.fechaResolucion ?? null,
+        comentarios:         body.comentarios,
+        accionesRealizadas:  body.accionesRealizadas ?? null,
+        // Solo actualiza ultimoCambioEstado si el estado cambió
+        ...(cambioEstado ? { ultimoCambioEstado: new Date().toISOString() } : {}),
+        updatedAt:           new Date().toISOString(),
       })
       .where(eq(incidencias.id, incidenciaId))
       .returning()

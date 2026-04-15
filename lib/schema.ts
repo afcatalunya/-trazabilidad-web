@@ -73,17 +73,21 @@ export const comentarios = table('comentarios', {
 
 // ─── INCIDENCIAS ─────────────────────────────────────────────────────────────
 export const incidencias = table('incidencias', {
-  id:               integer('id').primaryKey({ autoIncrement: true }),
-  numeroPedido:     text('numero_pedido').notNull(),
-  tipoSalida:       text('tipo_salida'),
-  fechaIncidencia:  text('fecha_incidencia'),
-  tipoIncidencia:   text('tipo_incidencia'),
-  descripcion:      text('descripcion'),
-  estadoIncidencia: text('estado_incidencia').default('ABIERTA'),
-  fechaResolucion:  text('fecha_resolucion'),
-  comentarios:      text('comentarios'),
-  createdAt:        text('created_at').default(sql`(datetime('now'))`),
-  updatedAt:        text('updated_at').default(sql`(datetime('now'))`),
+  id:                  integer('id').primaryKey({ autoIncrement: true }),
+  numeroPedido:        text('numero_pedido').notNull(),
+  tipoSalida:          text('tipo_salida'),
+  fechaIncidencia:     text('fecha_incidencia'),
+  tipoIncidencia:      text('tipo_incidencia'),
+  descripcion:         text('descripcion'),
+  estadoIncidencia:    text('estado_incidencia').default('ABIERTA'),
+  fechaResolucion:     text('fecha_resolucion'),
+  comentarios:         text('comentarios'),
+  // Campos nuevos — todos opcionales para no romper datos existentes
+  foto:                text('foto'),                  // URL imagen en Vercel Blob
+  accionesRealizadas:  text('acciones_realizadas'),   // Obligatorio al cambiar estado (validado en UI)
+  ultimoCambioEstado:  text('ultimo_cambio_estado'),  // ISO datetime, para alerta 5 días
+  createdAt:           text('created_at').default(sql`(datetime('now'))`),
+  updatedAt:           text('updated_at').default(sql`(datetime('now'))`),
 })
 
 // ─── HISTORIAL ───────────────────────────────────────────────────────────────
