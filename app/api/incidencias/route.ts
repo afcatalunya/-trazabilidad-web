@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { incidencias } from '@/lib/schema'
+import { incidencias, pedidos } from '@/lib/schema'
 import { eq } from 'drizzle-orm'
 import { auth } from '@/lib/auth'
 
@@ -13,15 +13,26 @@ export async function GET(req: NextRequest) {
 
     const estadoParam = req.nextUrl.searchParams.get('estado')
 
-    let result
-    if (estadoParam) {
-      result = await db
-        .select()
-        .from(incidencias)
-        .where(eq(incidencias.estadoIncidencia, estadoParam))
-    } else {
-      result = await db.select().from(incidencias)
-    }
+    const query = db
+      .select({
+        id:                incidencias.id,
+        numeroPedido:      incidencias.numeroPedido,
+        tipoSalida:        incidencias.tipoSalida,
+        fechaIncidencia:   incidencias.fechaIncidencia,
+        tipoIncidencia:    incidencias.tipoIncidencia,
+        descripcion:       incidencias.descripcion,
+        estadoIncidencia:  incidencias.estadoIncidencia,
+        fechaResolucion:   incidencias.fechaResolucion,
+        comentarios:       incidencias.comentarios,
+        createdAt:         incidencias.createdAt,
+        pedidoId:          pedidos.id,
+      })
+      .from(incidencias)
+      .leftJoin(pedidos, eq(incidencias.numeroPedido, pedidos.numeroPedido))
+
+    const result = estadoParam
+      ? await query.where(eq(incidencias.estadoIncidencia, estadoParam))
+      : await query
 
     return NextResponse.json(result)
   } catch (error) {

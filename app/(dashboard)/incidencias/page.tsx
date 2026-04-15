@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -16,6 +17,7 @@ interface Incidencia {
   fechaResolucion?: string
   comentarios?: string
   createdAt?: string
+  pedidoId?: number | null
 }
 
 const ESTADOS = [
@@ -169,7 +171,19 @@ export default function IncidenciasPage() {
                 <tbody className="divide-y divide-gray-50">
                   {filteredIncidencias.map(inc => (
                     <tr key={inc.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-3 text-sm font-semibold text-gray-900">{inc.numeroPedido}</td>
+                      <td className="px-4 py-3 text-sm font-semibold">
+                        {inc.pedidoId ? (
+                          <Link
+                            href={`/pedidos/${inc.pedidoId}`}
+                            className="hover:underline underline-offset-2"
+                            style={{ color: '#1a5c35' }}
+                          >
+                            {inc.numeroPedido}
+                          </Link>
+                        ) : (
+                          <span className="text-gray-900">{inc.numeroPedido}</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-sm text-gray-600">{inc.tipoIncidencia || '-'}</td>
                       <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">{inc.descripcion || '-'}</td>
                       <td className="px-4 py-3"><Badge variant={ESTADO_COLOR[inc.estadoIncidencia] as any}>{inc.estadoIncidencia}</Badge></td>
