@@ -8,7 +8,8 @@ export default function proxy(req: NextRequest) {
   if (
     pathname.startsWith('/login') ||
     pathname.startsWith('/api/auth') ||
-    pathname.startsWith('/_next')
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/api/email/')   // cron-job.org llama sin sesión, el Bearer token lo valida el route handler
   ) {
     return NextResponse.next()
   }
