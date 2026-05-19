@@ -1,15 +1,13 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { pedidos } from '@/lib/schema'
-import { isNotNull, or, isNull, eq } from 'drizzle-orm'
-import { enviarEmailCargaMurcia } from '@/lib/email'
+import { enviarEmailCargaValencia } from '@/lib/email'
 import { sql } from 'drizzle-orm'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST() {
   try {
-    // Pedidos terminados (fechaTerminado NOT NULL) sin fecha de carga en camión
     const lista = await db
       .select({
         numeroPedido:       pedidos.numeroPedido,
@@ -23,18 +21,18 @@ export async function POST() {
         sql`${pedidos.fechaTerminado} IS NOT NULL
             AND ${pedidos.fechaTerminado} != ''
             AND (${pedidos.fechaCargaCamion} IS NULL OR ${pedidos.fechaCargaCamion} = '')
-            AND (${pedidos.proveedor} IS NULL OR ${pedidos.proveedor} != 'STOCK VALENCIA')`
+            AND ${pedidos.proveedor} = 'STOCK VALENCIA'`
       )
       .orderBy(pedidos.numeroPedido)
 
     if (lista.length === 0) {
       return NextResponse.json(
-        { ok: false, error: 'No hay pedidos terminados pendientes de carga' },
+        { ok: false, error: 'No hay pedidos STOCK VALENCIA terminados pendientes de carga' },
         { status: 404 }
       )
     }
 
-    await enviarEmailCargaMurcia(lista)
+    await enviarEmailCargaValencia(lista)
 
     return NextResponse.json({
       ok:      true,
@@ -43,7 +41,7 @@ export async function POST() {
       mensaje: `Email enviado — ${lista.length} pedidos, ${lista.filter(p => p.pdfAdjunto).length} PDFs adjuntos`,
     })
   } catch (err: any) {
-    console.error('Error carga-murcia email:', err)
+    console.error('Error carga-valencia email:', err)
     return NextResponse.json(
       { ok: false, error: err.message || 'Error desconocido' },
       { status: 500 }
@@ -68,7 +66,7 @@ export async function GET() {
         sql`${pedidos.fechaTerminado} IS NOT NULL
             AND ${pedidos.fechaTerminado} != ''
             AND (${pedidos.fechaCargaCamion} IS NULL OR ${pedidos.fechaCargaCamion} = '')
-            AND (${pedidos.proveedor} IS NULL OR ${pedidos.proveedor} != 'STOCK VALENCIA')`
+            AND ${pedidos.proveedor} = 'STOCK VALENCIA'`
       )
       .orderBy(pedidos.numeroPedido)
 

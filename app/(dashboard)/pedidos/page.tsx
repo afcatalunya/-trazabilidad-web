@@ -6,6 +6,7 @@ import { FiltrosPedidos } from '@/components/pedidos/FiltrosPedidos'
 import { EstadoBadge } from '@/components/pedidos/EstadoBadge'
 import { KpiCard } from '@/components/pedidos/KpiCard'
 import { BotonCargaMurcia } from '@/components/pedidos/BotonCargaMurcia'
+import { BotonCargaValencia } from '@/components/pedidos/BotonCargaValencia'
 import { AutoRefresh } from '@/components/pedidos/AutoRefresh'
 import { db } from '@/lib/db'
 import { pedidos } from '@/lib/schema'
@@ -206,6 +207,7 @@ export default async function PedidosPage({ searchParams }: PageProps) {
         </div>
         <div className="flex items-center gap-2">
           <BotonCargaMurcia />
+          <BotonCargaValencia />
           {/* Exportar CSV — respeta todos los filtros activos */}
           <a
             href={`/api/pedidos/export?${[
