@@ -148,8 +148,8 @@ export default async function PedidosPage({ searchParams }: PageProps) {
 
   return (
     <>
-      {/* Auto-refresco silencioso cada 30 segundos */}
-      <AutoRefresh intervalMs={30_000} />
+      {/* Auto-refresco silencioso cada 120 segundos */}
+      <AutoRefresh intervalMs={120_000} />
       <Header title="Pedidos" />
 
       {/* KPI Cards */}
