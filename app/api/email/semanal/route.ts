@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     const { enviarInformeSemanal } = await import('@/lib/email')
     await enviarInformeSemanal(activos)
 
-    return NextResponse.json({ ok: true, enviados: activos.length })
+    return NextResponse.json({ ok: true, pedidos: activos.length })
   } catch (error: any) {
     console.error('Error informe semanal:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })

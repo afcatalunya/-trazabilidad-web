@@ -136,7 +136,7 @@ export async function enviarInformeSemanal(pedidos: Array<{
   proveedor?: string | null
   urgente?: string | null
 }>) {
-  if (!process.env.EMAIL_SMTP_HOST) return
+  if (!process.env.EMAIL_SMTP_HOST || pedidos.length === 0) return
 
   const appUrl = getAppUrl()
   const filas = pedidos.map(p => `

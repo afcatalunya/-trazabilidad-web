@@ -301,6 +301,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState<{ tipo: 'ok' | 'error'; texto: string } | null>(null)
   const [emailLoading, setEmailLoading] = useState<string | null>(null)
+  const [emailMsg, setEmailMsg] = useState<{ endpoint: string; tipo: 'ok' | 'error'; texto: string } | null>(null)
 
   useEffect(() => {
     if (session && (session.user as any)?.rol !== 'ADMIN') router.push('/pedidos')
@@ -373,13 +374,20 @@ export default function AdminPage() {
 
   async function enviarEmail(endpoint: string, label: string) {
     setEmailLoading(endpoint)
-    const res = await fetch(`/api/email/${endpoint}`, { method: 'POST' })
-    setEmailLoading(null)
-    if (res.ok) {
-      mostrarMsg('ok', `✅ ${label} enviado correctamente`)
-    } else {
+    setEmailMsg(null)
+    try {
+      const res = await fetch(`/api/email/${endpoint}`, { method: 'POST' })
       const data = await res.json().catch(() => ({}))
-      mostrarMsg('error', `Error: ${data.error || 'No se pudo enviar el email'}`)
+      if (res.ok) {
+        setEmailMsg({ endpoint, tipo: 'ok', texto: `✅ ${label} enviado correctamente` })
+      } else {
+        setEmailMsg({ endpoint, tipo: 'error', texto: `❌ ${data.error || 'No se pudo enviar el email'}` })
+      }
+    } catch (err: any) {
+      setEmailMsg({ endpoint, tipo: 'error', texto: `❌ Error de red: ${err?.message || 'desconocido'}` })
+    } finally {
+      setEmailLoading(null)
+      setTimeout(() => setEmailMsg(null), 8000)
     }
   }
 
@@ -608,8 +616,11 @@ export default function AdminPage() {
                 <button onClick={() => enviarEmail('semanal', 'Informe semanal')}
                   disabled={emailLoading !== null}
                   className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
-                  {emailLoading === 'semanal' ? 'Enviando...' : 'Enviar Ahora'}
+                  {emailLoading === 'semanal' ? '⏳ Enviando...' : 'Enviar Ahora'}
                 </button>
+                {emailMsg?.endpoint === 'semanal' && (
+                  <p className={`mt-2 text-xs font-medium ${emailMsg.tipo === 'ok' ? 'text-green-700' : 'text-red-700'}`}>{emailMsg.texto}</p>
+                )}
               </div>
               <div className="border border-yellow-200 rounded-lg p-4 bg-yellow-50">
                 <h3 className="font-semibold text-yellow-800 mb-1">⏰ Alerta Sin FechaSalida</h3>
@@ -617,8 +628,11 @@ export default function AdminPage() {
                 <button onClick={() => enviarEmail('alerta-sin-salida', 'Alerta sin salida')}
                   disabled={emailLoading !== null}
                   className="bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-400 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
-                  {emailLoading === 'alerta-sin-salida' ? 'Enviando...' : 'Enviar Ahora'}
+                  {emailLoading === 'alerta-sin-salida' ? '⏳ Enviando...' : 'Enviar Ahora'}
                 </button>
+                {emailMsg?.endpoint === 'alerta-sin-salida' && (
+                  <p className={`mt-2 text-xs font-medium ${emailMsg.tipo === 'ok' ? 'text-green-700' : 'text-red-700'}`}>{emailMsg.texto}</p>
+                )}
               </div>
               <div className="border border-red-200 rounded-lg p-4 bg-red-50">
                 <h3 className="font-semibold text-red-800 mb-1">⚠️ Terminados Sin Tarragona</h3>
@@ -626,8 +640,11 @@ export default function AdminPage() {
                 <button onClick={() => enviarEmail('alerta-terminados', 'Alerta terminados')}
                   disabled={emailLoading !== null}
                   className="bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
-                  {emailLoading === 'alerta-terminados' ? 'Enviando...' : 'Enviar Ahora'}
+                  {emailLoading === 'alerta-terminados' ? '⏳ Enviando...' : 'Enviar Ahora'}
                 </button>
+                {emailMsg?.endpoint === 'alerta-terminados' && (
+                  <p className={`mt-2 text-xs font-medium ${emailMsg.tipo === 'ok' ? 'text-green-700' : 'text-red-700'}`}>{emailMsg.texto}</p>
+                )}
               </div>
             </div>
           </div>
