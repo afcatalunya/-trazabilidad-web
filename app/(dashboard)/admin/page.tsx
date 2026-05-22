@@ -379,7 +379,11 @@ export default function AdminPage() {
       const res = await fetch(`/api/email/${endpoint}`, { method: 'POST' })
       const data = await res.json().catch(() => ({}))
       if (res.ok) {
-        setEmailMsg({ endpoint, tipo: 'ok', texto: `✅ ${label} enviado correctamente` })
+        if (data.sinDatos) {
+          setEmailMsg({ endpoint, tipo: 'ok', texto: `ℹ️ ${data.mensaje || 'Sin pedidos para esta alerta — no se envía email'}` })
+        } else {
+          setEmailMsg({ endpoint, tipo: 'ok', texto: `✅ ${label} enviado — ${data.pedidos ?? ''} pedidos` })
+        }
       } else {
         setEmailMsg({ endpoint, tipo: 'error', texto: `❌ ${data.error || 'No se pudo enviar el email'}` })
       }

@@ -37,6 +37,10 @@ export async function POST(req: NextRequest) {
       }))
       .sort((a, b) => b.diasEspera - a.diasEspera)
 
+    if (filtrados.length === 0) {
+      return NextResponse.json({ ok: true, pedidos: 0, sinDatos: true, mensaje: 'Sin pedidos con más de 3 días sin FechaSalida' })
+    }
+
     const { enviarAlertaSinSalida } = await import('@/lib/email')
     await enviarAlertaSinSalida(filtrados)
 

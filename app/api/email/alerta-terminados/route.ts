@@ -24,6 +24,10 @@ export async function POST(req: NextRequest) {
       p => p.fechaTerminado && !p.fechaEnTarragona && p.estadoPedido !== 'ANULADO'
     )
 
+    if (filtrados.length === 0) {
+      return NextResponse.json({ ok: true, pedidos: 0, sinDatos: true, mensaje: 'Sin pedidos terminados pendientes de llegar a Tarragona' })
+    }
+
     const { enviarAlertaTerminadosSinCamion } = await import('@/lib/email')
     await enviarAlertaTerminadosSinCamion(filtrados)
 
