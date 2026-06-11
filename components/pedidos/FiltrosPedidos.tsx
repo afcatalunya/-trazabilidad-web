@@ -9,6 +9,7 @@ const ESTADOS = [
   { value: 'EN PROCESO', label: 'En Proceso' },
   { value: 'PLANNING', label: 'Planning' },
   { value: 'PARA CARGAR MURCIA', label: 'Para Cargar Murcia' },
+  { value: 'PARA CARGAR VALENCIA', label: 'Para Cargar Valencia' },
   { value: 'EN CAMION', label: 'En Camión' },
   { value: 'EN ALMACÉN', label: 'En Almacén' },
   { value: 'ENTREGADO', label: 'Entregado' },

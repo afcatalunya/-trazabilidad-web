@@ -3,6 +3,7 @@ export type Estado =
   | 'EN PROCESO'
   | 'PLANNING'
   | 'PARA CARGAR MURCIA'
+  | 'PARA CARGAR VALENCIA'
   | 'EN CAMION'
   | 'EN ALMACÉN'
   | 'ENTREGADO'
@@ -44,7 +45,8 @@ export function calcularEstado(pedido: Partial<Pedido>): string {
   if (pedido.fechaEntregaCliente) return 'ENTREGADO'
   if (pedido.fechaEnTarragona) return 'EN ALMACÉN'
   if (pedido.fechaCargaCamion) return 'EN CAMION'
-  if (pedido.fechaTerminado) return 'PARA CARGAR MURCIA'
+  if (pedido.fechaTerminado)
+    return pedido.proveedor === 'STOCK VALENCIA' ? 'PARA CARGAR VALENCIA' : 'PARA CARGAR MURCIA'
   if (pedido.fechaPlanning) return 'PLANNING'
   if (pedido.fechaSalida) return 'EN PROCESO'
   return 'SIN PEDIDO DE COMPRA'
@@ -67,6 +69,7 @@ export function getEstadoColor(estado: string): EstadoColor {
     'EN PROCESO':           { bg: 'bg-orange-200', text: 'text-orange-900' },
     'PLANNING':             { bg: 'bg-yellow-200', text: 'text-yellow-900' },
     'PARA CARGAR MURCIA':   { bg: 'bg-yellow-200', text: 'text-yellow-900' },
+    'PARA CARGAR VALENCIA': { bg: 'bg-teal-200', text: 'text-teal-900' },
     'EN CAMION':            { bg: 'bg-blue-200', text: 'text-blue-900' },
     'EN ALMACÉN':           { bg: 'bg-green-200', text: 'text-green-900' },
     'ENTREGADO':            { bg: 'bg-green-600', text: 'text-white' },

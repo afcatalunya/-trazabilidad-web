@@ -140,7 +140,7 @@ export default async function PedidosPage({ searchParams }: PageProps) {
     { label: 'Todos',       value: totalAll,                                      color: '#2d9e4e', key: '' },
     { label: 'Sin pedido',  value: stats['SIN PEDIDO DE COMPRA'] || 0,            color: '#ef4444', key: 'SIN PEDIDO DE COMPRA' },
     { label: 'En proceso',  value: stats['EN PROCESO'] || 0,                      color: '#f97316', key: 'EN PROCESO' },
-    { label: 'Planning',    value: (stats['PLANNING'] || 0) + (stats['PARA CARGAR MURCIA'] || 0), color: '#eab308', key: 'PLANNING' },
+    { label: 'Planning',    value: (stats['PLANNING'] || 0) + (stats['PARA CARGAR MURCIA'] || 0) + (stats['PARA CARGAR VALENCIA'] || 0), color: '#eab308', key: 'PLANNING' },
     { label: 'En camión',   value: stats['EN CAMION'] || 0,                       color: '#3b82f6', key: 'EN CAMION' },
     { label: 'En almacén',  value: stats['EN ALMACÉN'] || 0,                      color: '#22c55e', key: 'EN ALMACÉN' },
     { label: 'Entregados',  value: stats['ENTREGADO'] || 0,                       color: '#2d9e4e', key: 'ENTREGADO' },

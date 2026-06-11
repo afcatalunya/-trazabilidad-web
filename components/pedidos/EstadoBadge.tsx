@@ -20,6 +20,10 @@ const ESTADO_CONFIG: Record<string, { bg: string; text: string; icon: string; do
     bg: '#fffbeb', text: '#92400e', dot: '#f59e0b',
     icon: '▲',
   },
+  'PARA CARGAR VALENCIA': {
+    bg: '#f0fdfa', text: '#115e59', dot: '#14b8a6',
+    icon: '▲',
+  },
   'EN CAMION': {
     bg: '#eff6ff', text: '#1e40af', dot: '#3b82f6',
     icon: '→',
@@ -43,7 +47,8 @@ const ESTADO_LABEL: Record<string, string> = {
   'SIN PEDIDO DE COMPRA': 'SIN PEDIDO',
   'EN PROCESO':           'EN PROCESO',
   'PLANNING':             'PLANNING',
-  'PARA CARGAR MURCIA':   'PARA CARGAR',
+  'PARA CARGAR MURCIA':   'CARGAR MURCIA',
+  'PARA CARGAR VALENCIA': 'CARGAR VALENCIA',
   'EN CAMION':            'EN CAMIÓN',
   'EN ALMACÉN':           'EN ALMACÉN',
   'ENTREGADO':            'ENTREGADO',

@@ -17,6 +17,7 @@ export async function GET(req: NextRequest) {
       'EN PROCESO': 0,
       'PLANNING': 0,
       'PARA CARGAR MURCIA': 0,
+      'PARA CARGAR VALENCIA': 0,
       'EN CAMION': 0,
       'EN ALMACÉN': 0,
       'ENTREGADO': 0,
