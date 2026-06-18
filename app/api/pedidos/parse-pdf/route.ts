@@ -15,7 +15,11 @@ export async function POST(request: Request) {
     const buffer = Buffer.from(await file.arrayBuffer())
 
     // ─── Subir a Vercel Blob ─────────────────────────────────────────────────
+    // v22.36.4: NO se traga el fallo. Si la subida falla, devolvemos blobError
+    // para que el formulario AVISE EN ROJO y NO deje crear el pedido sin la OT
+    // (incidencia jun-2026: token caducado → 3 meses de pedidos sin orden de trabajo).
     let pdfAdjunto: string | null = null
+    let blobError: string | null = null
     try {
       const { put } = await import('@vercel/blob')
       const blobToken = process.env.BLOB_READ_WRITE_TOKEN
@@ -26,8 +30,9 @@ export async function POST(request: Request) {
         ...(blobToken ? { token: blobToken } : {}),
       })
       pdfAdjunto = blob.url
-    } catch (blobErr) {
-      console.warn('Vercel Blob no disponible, continuando sin adjunto:', blobErr)
+    } catch (blobErr: any) {
+      blobError = blobErr?.message || 'No se pudo subir la orden de trabajo al almacenamiento'
+      console.error('Vercel Blob FALLÓ al subir la OT:', blobErr)
     }
 
     // Importación dinámica para evitar problemas de compilación (igual que nodemailer)
@@ -89,7 +94,7 @@ export async function POST(request: Request) {
     // El resto (tipo salida, categoría, referencia, acabado, color, proveedor...)
     // se introduce manualmente porque un pedido puede tener varias referencias.
 
-    return Response.json({ ok: true, campos: resultado, pdfAdjunto })
+    return Response.json({ ok: true, campos: resultado, pdfAdjunto, blobError })
   } catch (err: any) {
     console.error('Error parseando PDF:', err)
     return Response.json({ error: 'Error al procesar el PDF: ' + err.message }, { status: 500 })

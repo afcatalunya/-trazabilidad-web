@@ -115,6 +115,9 @@ export function PedidoForm({ pedido, clientes = [], onSubmit, loading = false }:
   const [pdfLoading, setPdfLoading] = useState(false)
   const [pdfMsg, setPdfMsg] = useState<{ type: 'ok' | 'error'; text: string } | null>(null)
   const [pdfAdjunto, setPdfAdjunto] = useState<string | null>(null)
+  // v22.36.4: true si se eligió un PDF pero la subida a Vercel Blob falló.
+  // Bloquea el guardado para que nunca quede un pedido sin orden de trabajo.
+  const [pdfFalloSubida, setPdfFalloSubida] = useState(false)
 
   // ── Carga desde PDF ───────────────────────────────────────────────────────
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,8 +132,19 @@ export function PedidoForm({ pedido, clientes = [], onSubmit, loading = false }:
       const data = await res.json()
       if (!res.ok || !data.ok) throw new Error(data.error || 'Error desconocido')
       setFormData({ ...defaultFormData, ...data.campos })
-      if (data.pdfAdjunto) setPdfAdjunto(data.pdfAdjunto)
-      setPdfMsg({ type: 'ok', text: `✅ PDF leído${data.pdfAdjunto ? ' y guardado como adjunto' : ''} — Nº pedido, fecha, Nº cliente y nombre cargados automáticamente. Completa manualmente: tipo salida, comercial, categoría, referencia, acabado, color y proveedor.` })
+
+      // v22.36.4: si la subida del PDF falló (blobError o sin URL), NO lo tragamos:
+      // avisamos en rojo y bloqueamos el guardado para no crear un pedido sin OT.
+      if (data.blobError || !data.pdfAdjunto) {
+        setPdfAdjunto(null)
+        setPdfFalloSubida(true)
+        setPdfMsg({ type: 'error', text: '❌ Los datos se han leído, pero la ORDEN DE TRABAJO NO se ha subido al servidor de almacenamiento. El pedido NO se puede guardar sin la OT — vuelve a seleccionar el PDF para reintentar. Si persiste, avisa a Daniel (token de almacenamiento).' })
+        return
+      }
+
+      setPdfAdjunto(data.pdfAdjunto)
+      setPdfFalloSubida(false)
+      setPdfMsg({ type: 'ok', text: `✅ PDF leído y guardado como adjunto — Nº pedido, fecha, Nº cliente y nombre cargados automáticamente. Completa manualmente: tipo salida, comercial, categoría, referencia, acabado, color y proveedor.` })
     } catch (err: any) {
       setPdfMsg({ type: 'error', text: '❌ ' + (err.message || 'No se pudo leer el PDF') })
     } finally {
@@ -151,6 +165,11 @@ export function PedidoForm({ pedido, clientes = [], onSubmit, loading = false }:
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    // v22.36.4: no permitir guardar si se intentó adjuntar la OT pero la subida falló.
+    if (pdfFalloSubida) {
+      setPdfMsg({ type: 'error', text: '❌ No se puede guardar: la orden de trabajo no se subió al almacenamiento. Vuelve a seleccionar el PDF para reintentar.' })
+      return
+    }
     await onSubmit({ ...formData, ...(pdfAdjunto ? { pdfAdjunto } : {}) })
   }
 
