@@ -225,6 +225,25 @@ export function PedidoRow({ pedido, cliente = '', stripe = false }: PedidoRowPro
           tipoSalida={pedido.tipoSalida}
         />
 
+        {/* OT — orden de trabajo adjunta */}
+        <td className="px-3 py-2 whitespace-nowrap text-center">
+          {pedido.pdfAdjunto
+            ? <a
+                href={pedido.pdfAdjunto}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="OT adjunta — clic para abrir"
+                className="inline-flex items-center justify-center hover:scale-110 transition-transform"
+                style={{ color: '#16a34a', fontSize: '15px' }}
+              >📎</a>
+            : <span
+                title="Falta la orden de trabajo (OT)"
+                className="inline-flex items-center justify-center font-bold text-white rounded-full"
+                style={{ background: '#dc2626', width: '17px', height: '17px', fontSize: '11px', lineHeight: '17px' }}
+              >!</span>
+          }
+        </td>
+
         {/* Tipo */}
         <td className="px-3 py-2 whitespace-nowrap">
           {pedido.tipoSalida
@@ -312,7 +331,7 @@ export function PedidoRow({ pedido, cliente = '', stripe = false }: PedidoRowPro
       {expandido && (
         <tr style={{ background: '#f4fdf7' }}>
           <td
-            colSpan={23}
+            colSpan={24}
             className="px-4 border-b border-green-100"
             style={{ borderLeft: '3px solid #2d9e4e' }}
           >
