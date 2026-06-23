@@ -46,7 +46,9 @@ export function calcularEstado(pedido: Partial<Pedido>): string {
   if (pedido.fechaEnTarragona) return 'EN ALMACÉN'
   if (pedido.fechaCargaCamion) return 'EN CAMION'
   if (pedido.fechaTerminado)
-    return pedido.proveedor === 'STOCK VALENCIA' ? 'PARA CARGAR VALENCIA' : 'PARA CARGAR MURCIA'
+    // v22.36.7: Valencia si "STOCK VALENCIA" está en proveedor O en origen material
+    return (pedido.proveedor === 'STOCK VALENCIA' || pedido.origenMaterial === 'STOCK VALENCIA')
+      ? 'PARA CARGAR VALENCIA' : 'PARA CARGAR MURCIA'
   if (pedido.fechaPlanning) return 'PLANNING'
   if (pedido.fechaSalida) return 'EN PROCESO'
   return 'SIN PEDIDO DE COMPRA'

@@ -21,7 +21,7 @@ export async function POST() {
         sql`${pedidos.fechaTerminado} IS NOT NULL
             AND ${pedidos.fechaTerminado} != ''
             AND (${pedidos.fechaCargaCamion} IS NULL OR ${pedidos.fechaCargaCamion} = '')
-            AND ${pedidos.proveedor} = 'STOCK VALENCIA'`
+            AND (${pedidos.proveedor} = 'STOCK VALENCIA' OR ${pedidos.origenMaterial} = 'STOCK VALENCIA')`
       )
       .orderBy(pedidos.numeroPedido)
 
@@ -66,7 +66,7 @@ export async function GET() {
         sql`${pedidos.fechaTerminado} IS NOT NULL
             AND ${pedidos.fechaTerminado} != ''
             AND (${pedidos.fechaCargaCamion} IS NULL OR ${pedidos.fechaCargaCamion} = '')
-            AND ${pedidos.proveedor} = 'STOCK VALENCIA'`
+            AND (${pedidos.proveedor} = 'STOCK VALENCIA' OR ${pedidos.origenMaterial} = 'STOCK VALENCIA')`
       )
       .orderBy(pedidos.numeroPedido)
 
