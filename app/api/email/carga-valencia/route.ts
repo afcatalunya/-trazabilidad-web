@@ -3,10 +3,13 @@ import { db } from '@/lib/db'
 import { pedidos } from '@/lib/schema'
 import { enviarEmailCargaValencia } from '@/lib/email'
 import { sql } from 'drizzle-orm'
+import { auth } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST() {
+  // v22.36.9 (auditoría C1): requiere sesión. Antes era invocable sin auth.
+  if (!(await auth())) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   try {
     const lista = await db
       .select({
@@ -51,6 +54,7 @@ export async function POST() {
 
 // GET: preview de los pedidos sin enviar email
 export async function GET() {
+  if (!(await auth())) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   try {
     const lista = await db
       .select({

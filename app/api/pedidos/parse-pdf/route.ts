@@ -1,9 +1,15 @@
+import { auth } from '@/lib/auth'
+
 /**
  * POST /api/pedidos/parse-pdf
  * Recibe un PDF de "Orden de Trabajo" de Aluminios Franco,
  * extrae los campos, lo sube a Vercel Blob y devuelve campos + URL.
  */
 export async function POST(request: Request) {
+  // v22.36.9 (auditoría C1): requiere sesión válida. El proxy solo comprueba que
+  // exista la cookie; sin esto, la ruta era invocable con cualquier cookie.
+  const session = await auth()
+  if (!session) return Response.json({ error: 'No autorizado' }, { status: 401 })
   try {
     const formData = await request.formData()
     const file = formData.get('pdf') as File | null
