@@ -9,14 +9,22 @@ import { auth } from '@/lib/auth'
  *
  * Contexto: el fix C1 (auditoría) añadió `await auth()` a estas rutas para que no fueran
  * invocables sin sesión. Pero el CRM de escritorio las llama por HTTP sin sesión, así que
- * necesitaba una vía de confianza. La clave interna es server-side (no se expone al navegador).
- * Puede sobreescribirse con la env CRM_INTERNAL_KEY sin tocar código.
+ * necesitaba una vía de confianza.
+ *
+ * Las claves se leen SOLO de variables de entorno (NO hay secreto en el repo):
+ *  - CRM_INTERNAL_KEY        → clave vigente.
+ *  - CRM_INTERNAL_KEY_LEGACY → clave anterior, aceptada temporalmente durante la rotación
+ *                              para que los CRM de escritorio sin actualizar sigan funcionando.
+ *                              Eliminar esta env cuando todos los equipos usen la clave nueva.
+ * Si no hay ninguna env definida, solo se permite el acceso con sesión web válida.
  */
-const CRM_INTERNAL_KEY =
-  process.env.CRM_INTERNAL_KEY || 'afcat-crm-internal-K7n2Q9mZ4vX8pL3rT6wB1yD5sH0jC2gE'
+const CLAVES_INTERNAS = [
+  process.env.CRM_INTERNAL_KEY,
+  process.env.CRM_INTERNAL_KEY_LEGACY,
+].filter((k): k is string => typeof k === 'string' && k.length > 0)
 
 export async function autorizadoCrmOWeb(req: Request): Promise<boolean> {
   const key = req.headers.get('x-crm-key')
-  if (key && key === CRM_INTERNAL_KEY) return true
+  if (key && CLAVES_INTERNAS.includes(key)) return true
   return !!(await auth())
 }
