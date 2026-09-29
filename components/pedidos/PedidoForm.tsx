@@ -50,6 +50,8 @@ const ESTADOS = [
   { value: 'PLANNING', label: 'Planning' },
   { value: 'PARA CARGAR MURCIA', label: 'Para Cargar Murcia' },
   { value: 'PARA CARGAR VALENCIA', label: 'Para Cargar Valencia' },
+  { value: 'REPARTO DESDE MURCIA', label: 'Reparto desde Murcia' },
+  { value: 'REPARTO DESDE VALENCIA', label: 'Reparto desde Valencia' },
   { value: 'EN CAMION', label: 'En Camión' },
   { value: 'EN ALMACÉN', label: 'En Almacén' },
   { value: 'ENTREGADO', label: 'Entregado' },

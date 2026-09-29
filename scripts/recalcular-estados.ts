@@ -30,6 +30,7 @@ loadEnvFile('.env.local')
 function calcularEstado(p: any): string {
   if (p['estado_pedido'] === 'ANULADO') return 'ANULADO'
   if (p['fecha_entrega_cliente']) return 'ENTREGADO'
+  if (p['estado_pedido'] === 'REPARTO DESDE MURCIA' || p['estado_pedido'] === 'REPARTO DESDE VALENCIA') return p['estado_pedido']
   if (p['fecha_en_tarragona'])    return 'EN ALMACÉN'
   if (p['fecha_carga_camion'])    return 'EN CAMION'
   if (p['fecha_terminado'])       return 'PARA CARGAR MURCIA'

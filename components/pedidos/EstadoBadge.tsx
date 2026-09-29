@@ -24,6 +24,14 @@ const ESTADO_CONFIG: Record<string, { bg: string; text: string; icon: string; do
     bg: '#f0fdfa', text: '#115e59', dot: '#14b8a6',
     icon: '▲',
   },
+  'REPARTO DESDE MURCIA': {
+    bg: '#eff6ff', text: '#1e40af', dot: '#3b82f6',
+    icon: '⇢',
+  },
+  'REPARTO DESDE VALENCIA': {
+    bg: '#eff6ff', text: '#1e40af', dot: '#3b82f6',
+    icon: '⇢',
+  },
   'EN CAMION': {
     bg: '#eff6ff', text: '#1e40af', dot: '#3b82f6',
     icon: '→',
@@ -49,6 +57,8 @@ const ESTADO_LABEL: Record<string, string> = {
   'PLANNING':             'PLANNING',
   'PARA CARGAR MURCIA':   'CARGAR MURCIA',
   'PARA CARGAR VALENCIA': 'CARGAR VALENCIA',
+  'REPARTO DESDE MURCIA':   'REPARTO MURCIA',
+  'REPARTO DESDE VALENCIA': 'REPARTO VALENCIA',
   'EN CAMION':            'EN CAMIÓN',
   'EN ALMACÉN':           'EN ALMACÉN',
   'ENTREGADO':            'ENTREGADO',

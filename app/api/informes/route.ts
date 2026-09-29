@@ -18,6 +18,8 @@ export async function GET(req: NextRequest) {
       'PLANNING': 0,
       'PARA CARGAR MURCIA': 0,
       'PARA CARGAR VALENCIA': 0,
+      'REPARTO DESDE MURCIA': 0,
+      'REPARTO DESDE VALENCIA': 0,
       'EN CAMION': 0,
       'EN ALMACÉN': 0,
       'ENTREGADO': 0,

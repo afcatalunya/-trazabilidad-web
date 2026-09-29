@@ -4,6 +4,8 @@ export type Estado =
   | 'PLANNING'
   | 'PARA CARGAR MURCIA'
   | 'PARA CARGAR VALENCIA'
+  | 'REPARTO DESDE MURCIA'
+  | 'REPARTO DESDE VALENCIA'
   | 'EN CAMION'
   | 'EN ALMACÉN'
   | 'ENTREGADO'
@@ -43,6 +45,9 @@ export interface Pedido {
 export function calcularEstado(pedido: Partial<Pedido>): string {
   if (pedido.estadoPedido === 'ANULADO') return 'ANULADO'
   if (pedido.fechaEntregaCliente) return 'ENTREGADO'
+  // Reparto directo desde Murcia/Valencia al cliente (sin pasar por Tarragona): se elige a mano y se respeta hasta la
+  // entrega. El CRM de escritorio aplica la misma regla (TursoTrazabilidadService.CalcularEstado).
+  if (pedido.estadoPedido === 'REPARTO DESDE MURCIA' || pedido.estadoPedido === 'REPARTO DESDE VALENCIA') return pedido.estadoPedido
   if (pedido.fechaEnTarragona) return 'EN ALMACÉN'
   if (pedido.fechaCargaCamion) return 'EN CAMION'
   if (pedido.fechaTerminado)
@@ -72,6 +77,8 @@ export function getEstadoColor(estado: string): EstadoColor {
     'PLANNING':             { bg: 'bg-yellow-200', text: 'text-yellow-900' },
     'PARA CARGAR MURCIA':   { bg: 'bg-yellow-200', text: 'text-yellow-900' },
     'PARA CARGAR VALENCIA': { bg: 'bg-teal-200', text: 'text-teal-900' },
+    'REPARTO DESDE MURCIA':   { bg: 'bg-blue-200', text: 'text-blue-900' },
+    'REPARTO DESDE VALENCIA': { bg: 'bg-blue-200', text: 'text-blue-900' },
     'EN CAMION':            { bg: 'bg-blue-200', text: 'text-blue-900' },
     'EN ALMACÉN':           { bg: 'bg-green-200', text: 'text-green-900' },
     'ENTREGADO':            { bg: 'bg-green-600', text: 'text-white' },
