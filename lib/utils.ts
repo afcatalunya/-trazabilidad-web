@@ -50,10 +50,14 @@ export function calcularEstado(pedido: Partial<Pedido>): string {
   if (pedido.estadoPedido === 'REPARTO DESDE MURCIA' || pedido.estadoPedido === 'REPARTO DESDE VALENCIA') return pedido.estadoPedido
   if (pedido.fechaEnTarragona) return 'EN ALMACÉN'
   if (pedido.fechaCargaCamion) return 'EN CAMION'
-  if (pedido.fechaTerminado)
+  if (pedido.fechaTerminado) {
+    // Dónde se carga, si se ha elegido a mano, se respeta (Juan, 29/10/2026: V26-11064 de SOPENA para Valencia «lo cambia
+    // automáticamente y no me deja cambiarlo»). Solo se deduce si aún no lo dice nadie. El CRM de escritorio hace lo mismo.
+    if (pedido.estadoPedido === 'PARA CARGAR MURCIA' || pedido.estadoPedido === 'PARA CARGAR VALENCIA') return pedido.estadoPedido
     // v22.36.7: Valencia si "STOCK VALENCIA" está en proveedor O en origen material
     return (pedido.proveedor === 'STOCK VALENCIA' || pedido.origenMaterial === 'STOCK VALENCIA')
       ? 'PARA CARGAR VALENCIA' : 'PARA CARGAR MURCIA'
+  }
   if (pedido.fechaPlanning) return 'PLANNING'
   if (pedido.fechaSalida) return 'EN PROCESO'
   return 'SIN PEDIDO DE COMPRA'

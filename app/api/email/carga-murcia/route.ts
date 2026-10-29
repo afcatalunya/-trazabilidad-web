@@ -26,8 +26,7 @@ export async function POST(req: Request) {
         sql`${pedidos.fechaTerminado} IS NOT NULL
             AND ${pedidos.fechaTerminado} != ''
             AND (${pedidos.fechaCargaCamion} IS NULL OR ${pedidos.fechaCargaCamion} = '')
-            AND (${pedidos.proveedor} IS NULL OR ${pedidos.proveedor} != 'STOCK VALENCIA')
-            AND (${pedidos.origenMaterial} IS NULL OR ${pedidos.origenMaterial} != 'STOCK VALENCIA')`
+            AND ${pedidos.estadoPedido} = 'PARA CARGAR MURCIA'`
       )
       .orderBy(pedidos.numeroPedido)
 
@@ -58,6 +57,8 @@ export async function POST(req: Request) {
 // GET: preview de los pedidos sin enviar email
 export async function GET(req: Request) {
   if (!(await autorizadoCrmOWeb(req))) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+  // Juan, 29/10/2026: salía un pedido ANULADO. Va por el estado: fuera anulados, entregados y repartos directos, y
+  // respeta el «Para cargar …» elegido a mano.
   try {
     const lista = await db
       .select({
@@ -73,8 +74,7 @@ export async function GET(req: Request) {
         sql`${pedidos.fechaTerminado} IS NOT NULL
             AND ${pedidos.fechaTerminado} != ''
             AND (${pedidos.fechaCargaCamion} IS NULL OR ${pedidos.fechaCargaCamion} = '')
-            AND (${pedidos.proveedor} IS NULL OR ${pedidos.proveedor} != 'STOCK VALENCIA')
-            AND (${pedidos.origenMaterial} IS NULL OR ${pedidos.origenMaterial} != 'STOCK VALENCIA')`
+            AND ${pedidos.estadoPedido} = 'PARA CARGAR MURCIA'`
       )
       .orderBy(pedidos.numeroPedido)
 

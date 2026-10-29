@@ -10,6 +10,8 @@ export const dynamic = 'force-dynamic'
 export async function POST(req: Request) {
   // v22.36.9 (C1) + v22.37 (fix): sesión web O clave interna del CRM de escritorio.
   if (!(await autorizadoCrmOWeb(req))) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+  // Juan, 29/10/2026: salía un pedido ANULADO. Va por el estado: fuera anulados, entregados y repartos directos, y
+  // respeta el «Para cargar …» elegido a mano.
   try {
     const lista = await db
       .select({
@@ -24,7 +26,7 @@ export async function POST(req: Request) {
         sql`${pedidos.fechaTerminado} IS NOT NULL
             AND ${pedidos.fechaTerminado} != ''
             AND (${pedidos.fechaCargaCamion} IS NULL OR ${pedidos.fechaCargaCamion} = '')
-            AND (${pedidos.proveedor} = 'STOCK VALENCIA' OR ${pedidos.origenMaterial} = 'STOCK VALENCIA')`
+            AND ${pedidos.estadoPedido} = 'PARA CARGAR VALENCIA'`
       )
       .orderBy(pedidos.numeroPedido)
 
@@ -70,7 +72,7 @@ export async function GET(req: Request) {
         sql`${pedidos.fechaTerminado} IS NOT NULL
             AND ${pedidos.fechaTerminado} != ''
             AND (${pedidos.fechaCargaCamion} IS NULL OR ${pedidos.fechaCargaCamion} = '')
-            AND (${pedidos.proveedor} = 'STOCK VALENCIA' OR ${pedidos.origenMaterial} = 'STOCK VALENCIA')`
+            AND ${pedidos.estadoPedido} = 'PARA CARGAR VALENCIA'`
       )
       .orderBy(pedidos.numeroPedido)
 
